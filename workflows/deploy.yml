@@ -1,0 +1,7 @@
+name: Deplot Github Pages
+
+on:
+  workflow_dispatch:
+  push:
+  branches:
+  - main
