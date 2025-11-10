@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Iron Tomb: Inventory RPG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- CUSTOM DUNGEON THEME STYLES --- */
+        :root {
+            --bg-color: #131110;
+            --container-color: #262320; 
+            --text-color: #e8e0c8; 
+            --primary-color: #a83f32; 
+            --secondary-color: #4b443c; 
+            --heal-color: #2a7e4b; 
+            --strength-color: #7b32a8; 
+            --gold-color: #d1b45b; 
+            --font-family: 'Inter', sans-serif;
+            --super-heal-color: #8a2be2;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 480px; 
+            background-color: var(--container-color);
+            border: 4px solid var(--secondary-color);
+            border-radius: 12px;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            position: relative;
+        }
+
+        /* PC/Desktop Layout Overrides */
+        @media (min-width: 768px) {
+            .game-container {
+                max-width: 1024px;
+                padding: 24px;
+            }
+        }
+        
+        /* --- MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .modal-content {
+            background-color: #35322e;
+            border: 3px solid var(--secondary-color);
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 90%;
+            width: 400px;
+            /* FIX: Removed max-height/overflow-y to fix content scrolling issue in modal */
+            overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+            transform: scale(0.9) translateY(-20px);
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        /* --- INVENTORY GRID STYLES --- */
+        #inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 columns on all sizes for 4x3 grid */
+            gap: 10px;
+            padding: 5px;
+        }
+        
+        @media (min-width: 768px) {
+            #inventory-grid {
+                grid-template-columns: repeat(4, 1fr); /* Enforce 4 columns */
+            }
+        }
+
+        .item-tile {
+            position: relative;
+            background-color: #4b443c;
+            border-radius: 8px;
+            aspect-ratio: 1 / 1; /* Make it square */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #5d564e;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        
+        /* Style for the empty slots/blocks */
+        .item-tile.empty {
+            background-color: #35322e;
+            border: 2px dashed #4b443c;
+            cursor: default;
+        }
+
+        .item-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            border-color: var(--primary-color);
+        }
+        
+        .item-tile.empty:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: #4b443c;
+        }
+
+        .item-icon-large {
+            font-size: 32px;
+            margin-bottom: 4px;
+        }
+
+        .item-count {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .item-name-small {
+            font-size: 10px;
+            color: var(--text-color);
+            text-align: center;
+            width: 100%;
+            padding: 0 2px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        
+        /* --- TOOLTIP (PC ONLY) --- */
+        .tooltip {
+            position: absolute;
+            left: 105%;
+            top: 0;
+            width: 250px;
+            background-color: #262320;
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 10;
+            pointer-events: none;
+            /* Allows clicks through the tooltip */
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+            display: none;
+            /* Hidden by default and managed by JS/CSS hover */
+        }
+        
+        /* Use a custom class for active tooltip visibility */
+        .item-tile:hover > .tooltip.desktop-only {
+            display: block;
+        }
+        
+        @media (max-width: 767px) {
+            .tooltip.desktop-only {
+                display: none !important;
+                /* Force hide on mobile */
+            }
+        }
+        
+        /* --- GENERIC STYLES --- (Retained from previous version) */
+        .stats-panel {
+            background-color: #35322e;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .hp-bar-container {
+            height: 12px;
+            background-color: #222;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #000;
+            margin-top: 4px;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease-in-out;
+        }
+        
+        /* CRITICAL FIX: Explicitly forces scrollbar on both devices */
+        #game-log {
+            min-height: 250px; /* Increased for better scroll area */
+            max-height: 350px; /* Locked mobile/small screen height */
+            background-color: #35322e;
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            overflow-y: scroll; /* CRITICAL: Enables vertical scrolling and forces the bar to show */
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-color);
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6);
+        }
+
+        @media (min-width: 768px) {
+             #game-log {
+                min-height: 600px;
+                max-height: 800px; /* Fixed high pixel height for desktop to guarantee scroll */
+                margin-bottom: 0; 
+             }
+        }
+
+        .log-entry.emphasis { color: #facc15;
+        }
+        .log-entry.damage { color: #f87171;
+        }
+        .log-entry.heal { color: #4ade80;
+        }
+        .log-entry.buff { color: var(--strength-color);
+        }
+        .log-entry.lvlup { color: #38bdf8; font-weight: bold;
+        }
+        
+        /* Button Styles */
+        .action-button {
+            transition: all 0.1s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 18px; 
+            padding: 14px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 0 rgba(0, 0, 0, 0.5); 
+            margin: 4px 0;
+            flex-grow: 1;
+            min-width: 100px;
+            width: 100%;
+        }
+
+        @media (min-width: 320px) {
+            .action-button {
+                width: 48%;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .action-button {
+                width: 100%;
+                margin: 8px 0;
+            }
+            #action-buttons {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+
+        .action-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-primary { background-color: var(--primary-color);
+            color: white; border: 2px solid #7c352a; }
+        .btn-secondary { background-color: var(--secondary-color); color: white;
+            border: 2px solid #38322e; }
+        .btn-heal { background-color: var(--heal-color); color: white;
+            border: 2px solid #1e6037; }
+        .btn-gold { background-color: var(--gold-color); color: var(--bg-color);
+            border: 2px solid #a18e47; }
+        
+    </style>
+</head>
+<body class="p-2 sm:p-4">
+    <div class="game-container">
+        <h1 class="text-3xl text-center font-bold mb-4 text-amber-500 tracking-wide">
+            The Iron Tomb 🗝️
+        </h1>
+
+        <div class="stats-panel" id="stats-panel">
+            <div class="grid grid-cols-2 gap-2 text-sm sm:text-base mb-2">
+ 
+                <p>✨ **Level:** <span id="player-level">1</span></p>
+                <p>⚔️ **Attack:** <span id="player-attack">3</span></p>
+                <p>💰 **Gold:** <span id="player-gold" class="text-amber-300">0</span></p>
+                <p>🔨 **Weapon:** <span id="player-weapon-level">1</span></p>
+                <p class="col-span-2">🔥 **Buff:** <span id="player-buff-status" class="text-gray-400 italic">None</span></p>
+  
+           </div>
+            
+            <div class="text-xs text-gray-400 mb-1">
+                HP: <span id="player-hp">10</span> / <span id="player-max-hp">10</span>
+            </div>
+            <div class="hp-bar-container">
+                <div 
+                    id="hp-bar-fill" class="hp-bar-fill" style="width: 100%;"></div>
+            </div>
+
+            <div class="text-xs text-gray-400 mt-2">
+                EXP: <span id="player-exp">0</span> / <span id="player-exp-next">10</span>
+            </div>
+        </div>
+
+
+        <div class="md:grid md:grid-cols-5 md:gap-4 flex 
+            flex-col">
+
+            <div class="md:col-span-3 order-1 md:order-2">
+                 <div id="game-log" class="shadow-inner">
+                    <div class="log-entry">Welcome, explorer, to the Iron Tomb.
+                        Can you survive the depths?</div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 order-2 md:order-1">
+                <div id="action-buttons-wrapper" class="md:flex-grow">
+                  
+                    <div id="action-buttons" class="flex flex-wrap justify-center gap-4">
+                        <button id="start-button" class="action-button btn-primary" onclick="startGame()">Start Descent</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+ 
+    <div id="shop-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold text-center mb-4 text-gold-color">💰 The Black Market 💰</h2>
+            <div id="shop-items-container" class="space-y-2">
+                </div>
+            <button class="action-button btn-gold w-full mt-4 mb-2" onclick="sellAllJunk()">Sell All Junk</button>
+            <button class="action-button btn-secondary w-full" onclick="closeShopModal()">Leave Shop</button>
+        </div>
+    </div>
+    
+    <div id="inventory-modal-overlay" class="modal-overlay">
+        <div class="modal-content !w-[450px] !max-w-[95%]"> 
+            <h2 class="text-2xl font-bold text-center mb-4 text-blue-400">🎒 
+                Inventory 🎒</h2>
+            
+            <div id="inventory-grid" class="border border-gray-600 rounded-lg p-2 bg-gray-700/30">
+                </div>
+            
+            <button class="action-button btn-secondary w-full mt-4" onclick="closeInventoryModal()">Close</button>
+        </div>
+    </div>
+    
+    <div id="item-action-modal-overlay" class="modal-overlay">
+        <div class="modal-content !w-[300px]">
+            <h3 id="action-item-title" class="text-xl font-bold text-center mb-2"></h3>
+            <p id="action-item-count" class="text-center text-sm text-gray-400 mb-3"></p>
+      
+            <div class="flex justify-center mb-4">
+                <span id="action-item-icon" class="text-5xl"></span>
+            </div>
+            
+            <p id="action-item-description" class="text-center mb-4 italic text-sm"></p>
+            
+            <div class="flex flex-col gap-2" id="action-buttons-container">
+    
+             </div>
+            
+            <button class="action-button btn-secondary w-full mt-4" onclick="closeItemActionModal()">Cancel</button>
+        </div>
+    </div>
+
+
+    <script>
+        // --- GLOBAL STATE AND DATA ---
+        
+ 
+        const XP_BASE = 10; 
+        const STRENGTH_BUFF_AMOUNT = 3; 
+        let isCombatMode = false;
+        let pendingActionItem = null; // Stores the ID of the item currently in the action modal
+        const INVENTORY_SLOTS = 12; // Fixed capacity: 4 columns x 3 rows
+
+        const gameState = {
+            maxHp: 10,
+            hp: 10,
+            attack: 3,
+            gold: 0,
+            inventory: {}, 
+        
+            level: 1,
+            exp: 0,
+            expToNextLevel: XP_BASE,
+            weaponLevel: 1,
+            currentEnemy: null,
+            isExploring: false,
+            temporaryBuff: 0, 
+        };
+        const itemDB = {
+            // Consumables
+            'hp_minor': { name: "Healing Potion", icon: '❤️', type: 'consumable', effect: { heal: 5 }, cost: 15, sell: 7, description: "Restores a small amount of vital energy (5 HP)."
+            },
+            'hp_super': { name: "Super Potion", icon: '💜', type: 'consumable', effect: { heal: 20 }, cost: 45, sell: 20, description: "A potent brew for serious injuries (20 HP)."
+            },
+            'atk_buff': { name: "Strength Potion", icon: '💪', type: 'consumable', effect: { attack: STRENGTH_BUFF_AMOUNT }, cost: 30, sell: 15, description: "Temporarily boosts your attack power."
+            },
+            
+            // Loot (Junk) Items
+            'loot_coin': { name: "Tarnished Coin", icon: '🪙', type: 'loot', sell: 1, isJunk: true, description: "A worthless, tarnished coin. Worth 1 Gold."
+            },
+            'loot_shard': { name: "Rusty Shard", icon: '🗡️', type: 'loot', sell: 5, isJunk: true, description: "A piece of broken, rusty metal. Worth 5 Gold."
+            },
+            'loot_gem': { name: "Rare Gemstone", icon: '✨', type: 'loot', sell: 25, isJunk: true, description: "A small, uncut gemstone. Highly valuable. Worth 25 Gold."
+            },
+
+            // Upgrades 
+            'upgrade': { name: "Weapon Sharpening", icon: '🔨', type: 'upgrade' },
+        };
+        const monsters = [
+            { name: "Giant Rat", hp: 4, attack: 1, gold: 5, exp: 5, drops: [['hp_minor', 20], ['loot_coin', 50]] },
+            { name: "Goblin Scavenger", hp: 6, attack: 2, gold: 10, exp: 8, drops: [['hp_minor', 10], ['loot_shard', 30], ['loot_coin', 30]] },
+            { name: "Skeleton Guard", hp: 8, attack: 3, gold: 15, exp: 12, drops: [['hp_minor', 10], ['loot_shard', 20], ['atk_buff', 5]] },
+      
+            { name: "Oozing Slime", hp: 10, attack: 2, gold: 8, exp: 10, drops: [['hp_minor', 5], ['hp_super', 5], ['loot_coin', 80]] },
+            { name: "Iron Golem", hp: 15, attack: 4, gold: 25, exp: 20, drops: [['hp_super', 10], ['loot_gem', 20], ['atk_buff', 10]] },
+        ];
+        const treasureEncounters = [
+            { message: "You find a dusty, ancient chest! (High Reward)", gold: 20, drops: [['hp_super', 20], ['loot_gem', 10]] },
+            { message: "A small pouch of tarnished coins lies in the corner.", gold: 10, drops: [['loot_coin', 50]] },
+            { message: "You discover a hidden cache of supplies and relics.", gold: 5, drops: [['hp_minor', 40], ['loot_shard', 30]] },
+        ];
+        // --- DOM ELEMENTS & UTILITIES ---
+        
+        const logElement = document.getElementById('game-log');
+        const buttonsElement = document.getElementById('action-buttons');
+        const hpBarFill = document.getElementById('hp-bar-fill');
+        const shopModal = document.getElementById('shop-modal-overlay');
+        const inventoryModal = document.getElementById('inventory-modal-overlay');
+        const itemActionModal = document.getElementById('item-action-modal-overlay');
+        const shopItemsContainer = document.getElementById('shop-items-container');
+        const inventoryGrid = document.getElementById('inventory-grid');
+        // const emptyInventoryMessage = document.getElementById('empty-inventory-message'); // REMOVED: Redundant
+        const actionButtonsContainer = document.getElementById('action-buttons-container');
+
+        const stats = {
+            hp: document.getElementById('player-hp'),
+            maxHp: document.getElementById('player-max-hp'),
+            gold: document.getElementById('player-gold'),
+            attack: document.getElementById('player-attack'),
+            weaponLevel: document.getElementById('player-weapon-level'),
+            buffStatus: document.getElementById('player-buff-status'),
+            level: document.getElementById('player-level'),
+      
+            exp: document.getElementById('player-exp'),
+            expNext: document.getElementById('player-exp-next'),
+        };
+        
+        /** Determines if the current view is mobile-sized (less than 768px).
+        */
+        function isMobileDevice() {
+            return window.innerWidth < 768;
+        }
+
+        /** Adds a new entry to the game log and scrolls to the bottom.
+        */
+        function log(message, className = '') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + className;
+            entry.innerHTML = message;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        /** Clears and creates new buttons.
+        */
+        function updateButtons(actions) {
+            buttonsElement.innerHTML = '';
+            actions.forEach(action => {
+                const button = document.createElement('button');
+                button.textContent = action.text;
+                button.className = `action-button ${action.cssClass}`;
+                button.onclick = action.handler;
+                buttonsElement.appendChild(button);
+        
+            });
+        }
+
+        /** Updates the displayed stats in the UI. 
+        * FIX: Calculates attack based on levels and buffs.
+        */
+        function updateStats() {
+            // Base attack: 3 (start) + 1 per level + 1 per weapon level
+            const baseAttack = 3 + (gameState.level - 1) * 1 + (gameState.weaponLevel - 1) * 1;
+            gameState.attack = baseAttack + gameState.temporaryBuff;
+
+            stats.hp.textContent = gameState.hp;
+            stats.maxHp.textContent = gameState.maxHp;
+            stats.gold.textContent = gameState.gold;
+            stats.attack.textContent = gameState.attack;
+            stats.weaponLevel.textContent = gameState.weaponLevel;
+            stats.level.textContent = gameState.level;
+            stats.exp.textContent = gameState.exp;
+            stats.expNext.textContent = gameState.expToNextLevel;
+
+            if (gameState.temporaryBuff > 0) {
+                 stats.buffStatus.textContent = `+${gameState.temporaryBuff} ATK (Temp)`;
+                 stats.buffStatus.className = 'text-strength italic font-bold';
+            } else {
+                 stats.buffStatus.textContent = `None`;
+                 stats.buffStatus.className = 'text-gray-400 italic';
+            }
+
+            const percent = (gameState.hp / gameState.maxHp) * 100;
+            hpBarFill.style.width = `${Math.max(0, percent)}%`;
+        }
+        
+        /** Removes any active temporary buffs. 
+        * FIX: No longer modifies gameState.attack directly, relies on updateStats.
+        */
+        function clearTempBuffs() {
+            if (gameState.temporaryBuff > 0) {
+                log(`The temporary attack buff of +${gameState.temporaryBuff} fades.`, 'text-gray-500');
+                gameState.temporaryBuff = 0;
+            }
+            updateStats();
+        }
+
+        /** Opens a specified modal with an animation. */
+        function openModal(modal) {
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modal.classList.add('active');
+            });
+        }
+
+        /** Closes a specified modal with an animation. */
+        function closeModal(modal, callback) {
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                if (callback) callback();
+            }, 300);
+        }
+        
+        // --- INVENTORY MANAGEMENT ---
+        
+        function addItemToInventory(itemId, quantity = 1) {
+            // New items only take a slot if the inventory isn't full
+            const currentUniqueItems = Object.keys(gameState.inventory).length;
+            if (!gameState.inventory[itemId] && currentUniqueItems >= INVENTORY_SLOTS) {
+                 log(`Your inventory is full! You discarded a **${itemDB[itemId].name}**.`, 'text-red-400');
+                 return; // Inventory slot full
+            }
+            
+            if (gameState.inventory[itemId]) {
+                gameState.inventory[itemId] += quantity;
+            } else {
+                gameState.inventory[itemId] = quantity;
+            }
+            // FIX: Always update the main buttons count whenever inventory changes
+            if (!isCombatMode) {
+                promptExploration();
+            } else {
+                promptCombat();
+            }
+        }
+        
+        function removeItemFromInventory(itemId, quantity = 1) {
+             if (gameState.inventory[itemId] && gameState.inventory[itemId] >= quantity) {
+                gameState.inventory[itemId] -= quantity;
+                if (gameState.inventory[itemId] <= 0) {
+                    delete gameState.inventory[itemId];
+                }
+                // FIX: Always update the main buttons count whenever inventory changes
+                 if (!isCombatMode) {
+                    promptExploration();
+                } else {
+                    promptCombat();
+                }
+                return true;
+            }
+             return false;
+        }
+
+        /** FIX: Renamed and updated to count the number of unique item types. */
+        function countUniqueItems() {
+            return Object.keys(gameState.inventory).length;
+        }
+        
+        // --- GAME FLOW FUNCTIONS ---
+
+        function startGame() {
+            // Reset core stats
+            gameState.maxHp = 10;
+            gameState.hp = 10;
+            gameState.attack = 3;
+            gameState.gold = 0;
+            gameState.inventory = {}; 
+        
+            // FIX: Explicitly initialize with 6 unique items to match the expected state
+            addItemToInventory('hp_minor', 3); // Item 1: Healing Potion (Consumable)
+            addItemToInventory('atk_buff', 1);  // Item 2: Strength Potion (Consumable)
+            addItemToInventory('hp_super', 1); // Item 3: Super Potion (Consumable)
+            addItemToInventory('loot_gem', 2); // Item 4: Rare Gemstone (Loot)
+            addItemToInventory('loot_shard', 3); // Item 5: Rusty Shard (Loot)
+            addItemToInventory('loot_coin', 15); // Item 6: Tarnished Coin (Loot)
+            
+            gameState.level = 1;
+            gameState.exp = 0;
+            gameState.expToNextLevel = XP_BASE;
+            gameState.weaponLevel = 1;
+            gameState.currentEnemy = null;
+            gameState.isExploring = false;
+            gameState.temporaryBuff = 0;
+            
+            logElement.innerHTML = ''; 
+            log("The Iron Tomb's gate slams shut behind you. Time to move!", 'emphasis');
+            updateStats();
+            promptExploration();
+        }
+
+        function explore() {
+            // FIX: Log the action taken
+            log("You decide to **Continue Descent**.", 'text-gray-400');
+            
+            clearTempBuffs();
+            gameState.currentEnemy = null; 
+            isCombatMode = false;
+
+            const roll = Math.random();
+            if (roll < 0.6) { 
+                startCombat();
+            } else if (roll < 0.85) { 
+                findTreasure();
+            } else if (roll < 0.95) { 
+                findShrine();
+            } else { 
+                enterShop();
+            }
+        }
+
+        function gainExperience(amount) {
+            gameState.exp += amount;
+            log(`You gain ${amount} experience points.`, 'text-blue-400');
+            checkLevelUp();
+            updateStats();
+        }
+
+        function checkLevelUp() {
+            while (gameState.exp >= gameState.expToNextLevel) {
+                gameState.exp -= gameState.expToNextLevel;
+                gameState.level++;
+                gameState.maxHp += 5; 
+                gameState.hp = gameState.maxHp; 
+                // Removed: gameState.attack += 1; (Now calculated in updateStats)
+                
+                gameState.expToNextLevel = XP_BASE * gameState.level;
+                log(`🔥 You reached LEVEL ${gameState.level}! Your stats have increased!`, 'lvlup');
+            }
+        }
+        
+        function processDrops(drops) {
+            let itemsFound = [];
+            drops.forEach(([itemId, chance]) => {
+                if (Math.random() * 100 < chance) {
+                    // Use addItemToInventory which updates the button count
+                    addItemToInventory(itemId); 
+                    itemsFound.push(itemDB[itemId].icon + itemDB[itemId].name);
+                }
+            });
+            if (itemsFound.length > 0) {
+                 log(`You found: ${itemsFound.join(', ')}!`, 'heal');
+            }
+        }
+        
+        // --- SHOP MODAL LOGIC ---
+
+        function enterShop() {
+            // FIX: Log the action taken
+            log("You step into the dark **Black Market**.", 'gold-color');
+
+            populateShopModal();
+            openModal(shopModal);
+        }
+
+        function closeShopModal() {
+            closeModal(shopModal, promptExploration);
+        }
+
+        function populateShopModal() {
+            shopItemsContainer.innerHTML = '';
+            const shopItems = [
+                { id: 'hp_minor', css: 'btn-heal' }, 
+                { id: 'hp_super', css: 'btn-secondary' }, 
+                { id: 'atk_buff', css: 'btn-secondary' }
+            ];
+            shopItems.forEach(entry => {
+                const item = itemDB[entry.id];
+                shopItemsContainer.innerHTML += `
+                    <div class="item-row bg-gray-600/50 rounded-lg p-3 flex justify-between items-center border border-gray-700 hover:bg-gray-600 cursor-pointer" onclick="buyItem('${entry.id}')">
+                        <div class="flex items-center">
+   
+                            <span class="text-3xl mr-3">${item.icon}</span>
+                            <div>
+                                <p class="font-bold">${item.name}</p>
+            
+                                <p class="text-xs opacity-75">${item.description}</p>
+                            </div>
+                        </div>
+                        <span class="font-bold 
+                            text-lg text-gold-color">${item.cost} 💰</span>
+                    </div>
+                `;
+            });
+            // Weapon Upgrade
+            const upgItem = itemDB['upgrade'];
+            const upgCost = 25 + (gameState.weaponLevel - 1) * 25;
+            shopItemsContainer.innerHTML += `
+                <div class="item-row bg-gold-color/30 rounded-lg p-3 flex justify-between items-center border border-gold-color/50 hover:bg-gold-color/40 cursor-pointer" onclick="buyItem('upgrade', ${upgCost})">
+                    <div class="flex items-center">
+                        <span class="text-3xl mr-3">${upgItem.icon}</span>
+                     
+                        <div>
+                            <p class="font-bold text-gold-color">${upgItem.name} (Lv. ${gameState.weaponLevel})</p>
+                            <p class="text-xs opacity-75 text-gray-200">Permanent +1 Attack.
+                                Next cost: ${upgCost}</p>
+                        </div>
+                    </div>
+                    <span class="font-bold text-lg text-gold-color">${upgCost} 💰</span>
+                </div>
+            `;
+        }
+        
+        function buyItem(itemId, costOverride) {
+            const item = itemDB[itemId];
+            const cost = costOverride || item.cost;
+            
+            if (gameState.gold < cost) {
+                log("You do not have enough gold for that purchase!", 'text-red-400');
+                populateShopModal(); 
+                return;
+            }
+
+            gameState.gold -= cost;
+            if (itemId === 'upgrade') {
+                gameState.weaponLevel++;
+                // Removed: gameState.attack += 1; (Now calculated in updateStats)
+                log(`Your weapon is sharpened! Attack permanently increased by 1.`, 'lvlup');
+                // The inventory count doesn't change here, so no need to call promptExploration
+            } else {
+                // Use addItemToInventory, which now calls promptExploration/promptCombat
+                addItemToInventory(itemId); 
+                log(`You bought a **${item.name}** for ${cost} gold.`, 'heal');
+            }
+
+            updateStats();
+            populateShopModal(); 
+        }
+
+        function sellAllJunk() {
+            let totalGold = 0;
+            let junkSoldCount = 0;
+            const itemsToRemove = [];
+            let inventoryChanged = false;
+
+            for (const itemId in gameState.inventory) {
+                const item = itemDB[itemId];
+                if (item && item.isJunk && gameState.inventory[itemId] > 0) {
+                    const count = gameState.inventory[itemId];
+                    totalGold += item.sell * count;
+                    junkSoldCount += count;
+                    itemsToRemove.push(itemId);
+                    inventoryChanged = true;
+                }
+            }
+            
+            if (junkSoldCount === 0) {
+                 log("You have no junk items to sell!", 'text-gray-500');
+                return;
+            }
+
+            itemsToRemove.forEach(itemId => {
+                delete gameState.inventory[itemId];
+            });
+            gameState.gold += totalGold;
+            
+            log(`You sold ${junkSoldCount} junk items for a total of ${totalGold} gold!`, 'gold-color');
+            
+            updateStats();
+            // FIX: Manually call promptExploration here to update the unique item count on the main buttons after mass deletion
+            promptExploration();
+        }
+
+        // --- INVENTORY/ITEM ACTION LOGIC ---
+        
+        function openInventoryModal() {
+            // FIX: Log opening only if not in combat (to prevent spam)
+            if (!isCombatMode) {
+                log("You open your **Inventory**.", 'text-blue-400');
+            }
+            populateInventoryModal();
+            openModal(inventoryModal);
+        }
+
+        function closeInventoryModal() {
+            // Determine callback based on game state before closing
+            const callback = isCombatMode ?
+                promptCombat : promptExploration;
+            closeModal(inventoryModal, callback);
+        }
+        
+        /** FIX: Populates the inventory grid, enforcing the 12-slot limit with empty tiles. */
+        function populateInventoryModal() {
+            inventoryGrid.innerHTML = '';
+            
+            const sortedItemIds = Object.keys(gameState.inventory)
+                .filter(id => gameState.inventory[id] > 0)
+                .sort((a, b) => {
+                    const typeA = itemDB[a].type;
+                    const typeB = itemDB[b].type;
+ 
+                    // Consumables first, then loot
+                    if (typeA === 'consumable' && typeB !== 'consumable') return -1;
+                    if (typeA !== 'consumable' && typeB === 'consumable') return 1;
+                    return itemDB[a].name.localeCompare(itemDB[b].name);
+                });
+                
+            // 1. Determine which items to display (up to the slot limit)
+            const itemIdsToDisplay = sortedItemIds.slice(0, INVENTORY_SLOTS);
+            
+            // 2. Populate actual items
+            itemIdsToDisplay.forEach(itemId => {
+                const count = gameState.inventory[itemId];
+                const item = itemDB[itemId];
+                
+                // Determine the primary click action
+                const clickHandler = isMobileDevice() ? 
+                    `openItemActionModal('${itemId}')` : 
+                    `handleInventoryClick('${itemId}')`;
+
+                let tooltipContent = `<div class="tooltip desktop-only">
+                    <p class="font-bold text-lg">${item.name}</p>
+                    <p class="text-sm italic text-gray-400 mb-1">x${count}</p>
+                    <p class="text-xs">${item.description}</p>`;
+                
+                if (item.isJunk) {
+                    tooltipContent += `<p class="text-xs mt-2 text-gold-color">Click to Sell (💰 ${item.sell} each)</p>`;
+                } else if (item.type === 'consumable' && !isCombatMode) {
+                    tooltipContent += `<p class="text-xs mt-2 text-heal">Click to Use</p>`;
+                } else if (item.type === 'consumable' && isCombatMode) {
+                    tooltipContent += `<p class="text-xs mt-2 text-red-400">Click to Use (Enemy gets free attack!)</p>`;
+                }
+
+                tooltipContent += `</div>`;
+                
+                inventoryGrid.innerHTML += `
+                    <div class="item-tile" onclick="${clickHandler}">
+                        <span class="item-icon-large">${item.icon}</span>
+                        <span class="item-count">${count}</span>
+                        <span class="item-name-small">${item.name}</span>
+                        ${tooltipContent}
+                    </div>
+                `;
+            });
+
+            // 3. Fill remaining slots with empty blocks
+            const emptySlots = INVENTORY_SLOTS - itemIdsToDisplay.length;
+            for (let i = 0; i < emptySlots; i++) {
+                inventoryGrid.innerHTML += `
+                    <div class="item-tile empty">
+                        <span class="text-gray-600">-- Empty --</span>
+                    </div>
+                `;
+            }
+        }
+        
+        /** Handles the click action depending on device/item type. */
+        function handleInventoryClick(itemId) {
+            // PC/Desktop interaction flow
+            const item = itemDB[itemId];
+            if (item.type === 'consumable') {
+                if (useItem(itemId)) {
+                    // Item was used successfully (removeItemFromInventory handles main button refresh)
+                    
+                    // Update the grid inside the modal first (to show the count reduction)
+                    populateInventoryModal(); 
+                    
+                    if (isCombatMode) {
+                        // FIX: In combat (PC), use of consumable ends the turn. 
+                        // Close modal and let enemy attack.
+                        closeModal(inventoryModal, takeEnemyTurnAfterPotionUse);
+                        return; 
+                    } 
+                    // If not in combat, we stay in the inventory modal after using a potion
+                }
+            } else if (item.isJunk) {
+                // For loot on PC, open the action modal for confirmation (to prevent accidental selling)
+                openItemActionModal(itemId);
+            }
+        }
+
+        /** Opens the mobile confirmation modal for an item. */
+        function openItemActionModal(itemId) {
+            pendingActionItem = itemId;
+            const item = itemDB[itemId];
+            const count = gameState.inventory[itemId];
+            
+            document.getElementById('action-item-title').textContent = item.name;
+            document.getElementById('action-item-icon').textContent = item.icon;
+            document.getElementById('action-item-count').textContent = `Quantity: x${count}`;
+            document.getElementById('action-item-description').textContent = item.description;
+
+            actionButtonsContainer.innerHTML = '';
+            
+            if (item.type === 'consumable') {
+                actionButtonsContainer.innerHTML += `
+                    <button class="action-button btn-heal" onclick="confirmUseItem()">Use One</button>
+                `;
+            }
+
+            if (item.isJunk) {
+                actionButtonsContainer.innerHTML += `
+                    <button class="action-button btn-gold" onclick="confirmSellItem()">Sell One (💰 ${item.sell})</button>
+                `;
+            }
+            
+            // Close the Inventory modal first, then open the Action modal
+            closeModal(inventoryModal, () => openModal(itemActionModal));
+        }
+
+        /** Closes the mobile confirmation modal and returns to the Inventory Modal. */
+        function closeItemActionModal() {
+            pendingActionItem = null;
+            closeModal(itemActionModal, () => openModal(inventoryModal));
+        }
+        
+        /** Executes the confirmed 'Use' action. */
+        function confirmUseItem() {
+            if (!pendingActionItem) return;
+            const itemId = pendingActionItem;
+            
+            if (useItem(itemId)) {
+                // Item successfully used (removeItemFromInventory handles main button refresh)
+
+                if (isCombatMode) {
+                    // In combat, close all modals and let the enemy strike back
+                    closeModal(itemActionModal, takeEnemyTurnAfterPotionUse);
+                } else {
+                    // Not in combat, refresh the inventory list inside the action modal
+                    closeModal(itemActionModal, () => {
+                        populateInventoryModal();
+                        openModal(inventoryModal);
+                    });
+                }
+            } else {
+                // Failed to use (e.g., ran out) - just refresh inventory modal
+                closeModal(itemActionModal, () => {
+                    populateInventoryModal();
+                    openModal(inventoryModal);
+                });
+            }
+        }
+
+        /** Executes the confirmed 'Sell' action. */
+        function confirmSellItem() {
+            if (!pendingActionItem) return;
+            sellSingleItem(pendingActionItem); // sellSingleItem calls removeItemFromInventory which updates the main button
+            
+            // Check if there are still items left in the inventory
+            if (gameState.inventory[pendingActionItem] > 0) {
+                // If items remain, refresh the Action Modal with new count
+                openItemActionModal(pendingActionItem);
+            } else {
+                // If item count reached 0, close Action Modal and return to Inventory Modal
+                closeModal(itemActionModal, () => {
+                    populateInventoryModal();
+                    openModal(inventoryModal);
+                });
+            }
+        }
+        
+        /** Centralized function for item usage logic.
+        * Returns true if used, false otherwise. */
+        function useItem(itemId) {
+            const item = itemDB[itemId];
+            if (!item || item.type !== 'consumable') return false;
+            
+            // removeItemFromInventory will update the main button count
+            if (removeItemFromInventory(itemId)) {
+                if (item.effect.heal) {
+                    const healAmount = item.effect.heal;
+                    gameState.hp = Math.min(gameState.maxHp, gameState.hp + healAmount);
+                    log(`You use a **${item.name}**, restoring ${healAmount} HP.`, 'heal');
+                } else if (item.effect.attack) {
+                    clearTempBuffs();
+                    gameState.temporaryBuff = item.effect.attack;
+                    // Removed: gameState.attack += item.effect.attack; (Now calculated in updateStats)
+                    log(`You use a **${item.name}**! Attack increases by +${item.effect.attack}.`, 'buff');
+                }
+            
+                updateStats();
+                return true;
+            } else {
+                 log(`Error: Failed to use ${item.name}. None in inventory?`, 'text-red-400');
+                return false;
+            }
+        }
+        
+        /** Logic for selling a single loot item from the inventory. */
+        function sellSingleItem(itemId) {
+            const item = itemDB[itemId];
+            if (!item || !item.isJunk) return;
+
+            // removeItemFromInventory will update the main button count
+            if (removeItemFromInventory(itemId)) {
+                gameState.gold += item.sell;
+                log(`Sold one **${item.name}** for ${item.sell} gold.`, 'gold-color');
+            }
+            updateStats();
+        }
+
+        /** Centralized function for enemy attack after player uses an item in combat. */
+        function takeEnemyTurnAfterPotionUse() {
+            const enemy = gameState.currentEnemy;
+            if (!enemy) {
+                promptExploration();
+                return;
+            }
+
+            const enemyDmg = enemy.attack;
+            gameState.hp -= enemyDmg;
+            log(`The ${enemy.name} attacks while you are focused, hitting you for ${enemyDmg} damage!`, 'damage');
+            updateStats();
+            if (gameState.hp <= 0) {
+                handleDefeat();
+                return;
+            }
+            
+            // FIX: promptCombat is called here which updates the main button count *after* the turn is complete.
+            promptCombat();
+        }
+
+        // --- COMBAT FUNCTIONS ---
+        
+        function startCombat() {
+            isCombatMode = true;
+            const enemyIndex = Math.floor(Math.random() * monsters.length);
+            const baseEnemy = monsters[enemyIndex];
+            const scale = 1 + (gameState.level - 1) * 0.2;
+            gameState.currentEnemy = {
+                name: baseEnemy.name,
+                hp: Math.round(baseEnemy.hp * scale),
+                attack: Math.round(baseEnemy.attack * scale),
+                gold: Math.round(baseEnemy.gold * scale),
+                exp: Math.round(baseEnemy.exp * scale),
+     
+                drops: baseEnemy.drops
+            };
+            log(`A hostile ${gameState.currentEnemy.name} appears! (${gameState.currentEnemy.hp} HP)`, 'damage');
+            promptCombat();
+        }
+
+        function promptCombat() {
+            // FIX: Use the new function to get the unique item count
+            const uniqueItemCount = countUniqueItems();
+            updateButtons([
+                { text: `⚔️ Attack`, cssClass: 'btn-primary', handler: () => handleAttack() },
+                { text: `📦 Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
+                { text: `🏃 Flee`, cssClass: 'btn-secondary', handler: () => handleFlee() },
+            ]);
+        }
+
+        function handleAttack() {
+            const enemy = gameState.currentEnemy;
+            const playerDmg = gameState.attack;
+            const enemyDmg = enemy.attack;
+
+            enemy.hp -= playerDmg;
+            log(`You strike the ${enemy.name} for ${playerDmg} damage!`);
+            if (enemy.hp <= 0) {
+                handleVictory();
+                return;
+            }
+
+            gameState.hp -= enemyDmg;
+            log(`The ${enemy.name} retaliates, hitting you for ${enemyDmg} damage.`, 'damage');
+            updateStats();
+            if (gameState.hp <= 0) {
+                handleDefeat();
+                return;
+            }
+            
+            promptCombat();
+        }
+
+        function handleFlee() {
+            if (Math.random() < 0.5) {
+                log("You managed to escape the monster!", 'heal');
+                gameState.currentEnemy = null;
+                clearTempBuffs();
+                promptExploration();
+            } else {
+                const enemy = gameState.currentEnemy;
+                const enemyDmg = enemy.attack;
+                gameState.hp -= enemyDmg;
+                log(`You failed to escape! The ${enemy.name} hits you for ${enemyDmg} damage as you stumble.`, 'damage');
+                updateStats();
+
+                if (gameState.hp <= 0) {
+                    handleDefeat();
+                    return;
+                }
+                promptCombat();
+            }
+        }
+
+        function handleVictory() {
+            const enemy = gameState.currentEnemy;
+            const goldGained = enemy.gold;
+            const expGained = enemy.exp;
+
+            gameState.gold += goldGained;
+            log(`You defeated the ${enemy.name}! Looted ${goldGained} gold.`, 'emphasis');
+            
+            processDrops(enemy.drops);
+            gameState.currentEnemy = null;
+            gainExperience(expGained);
+            clearTempBuffs();
+            promptExploration();
+        }
+
+        function handleDefeat() {
+            gameState.isExploring = false;
+            log("Your journey ends here. You were defeated...", 'text-red-600 font-bold');
+            log(`Game Over! Final Level: ${gameState.level}. Total Gold: ${gameState.gold}.`);
+            updateStats();
+            updateButtons([
+                { text: "Start New Game?", cssClass: 'btn-primary w-full', handler: () => startGame() }
+            ]);
+        }
+        
+        // --- NON-COMBAT FUNCTIONS (Events) ---
+
+        function findTreasure() {
+            const encounter = treasureEncounters[Math.floor(Math.random() * treasureEncounters.length)];
+            gameState.gold += encounter.gold;
+            log(`✨ ${encounter.message} You gain ${encounter.gold} gold!`, 'emphasis');
+
+            processDrops(encounter.drops);
+
+            updateStats();
+            promptExploration();
+        }
+        
+        function findShrine() {
+            const roll = Math.random();
+            if (roll < 0.6) {
+                const healAmount = 5;
+                gameState.hp = Math.min(gameState.maxHp, gameState.hp + healAmount);
+                log(`A shimmering blue light heals your wounds for ${healAmount} HP.`, 'heal');
+            } else {
+                clearTempBuffs();
+                const buffAmount = 1;
+                gameState.temporaryBuff = buffAmount;
+                // Removed: gameState.attack += buffAmount; (Now calculated in updateStats)
+                log(`A rune lights up, granting you a temporary +${buffAmount} attack buff!`, 'lvlup');
+            }
+            updateStats();
+            promptExploration();
+        }
+
+        // --- EXPLORATION PROMPT ---
+
+        function promptExploration() {
+            // FIX: Use the new function to get the unique item count
+            const uniqueItemCount = countUniqueItems();
+            log("The path continues deeper into the gloom. What do you do?");
+            updateButtons([
+                { text: "➡️ Continue Descent", cssClass: 'btn-primary', handler: () => explore() },
+                { text: `📦 Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
+                { text: `💰 Visit Shop`, cssClass: 'btn-gold', handler: () => enterShop() }
+            ]);
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            updateStats();
+        };
+
+    </script>
+</body>
+</html>
