@@ -1,0 +1,4 @@
+This is just a normal text file to say
+that all the images will be placed in here
+that are being used in the game, which are
+used as sprites in the game!
