@@ -523,16 +523,21 @@ function renderIcon(item, size = 32) {
         /** Clears and creates new buttons.
         */
         function updateButtons(actions) {
-            buttonsElement.innerHTML = '';
-            actions.forEach(action => {
-                const button = document.createElement('button');
-                button.textContent = action.text;
-                button.className = `action-button ${action.cssClass}`;
-                button.onclick = action.handler;
-                buttonsElement.appendChild(button);
-        
-            });
-        }
+  buttonsElement.innerHTML = ''; // clear existing
+  actions.forEach(action => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    // keep your base class + optional action.cssClass
+    button.className = `action-button ${action.cssClass || ''}`;
+    // IMPORTANT: use innerHTML so <img> inside action.text renders
+    button.innerHTML = action.text;
+    // use addEventListener so we don't clobber other handlers
+    if (typeof action.handler === 'function') {
+      button.addEventListener('click', action.handler);
+    }
+    buttonsElement.appendChild(button);
+  });
+}
 
         /** Updates the displayed stats in the UI. 
         * FIX: Calculates attack based on levels and buffs.
@@ -767,7 +772,7 @@ function renderIcon(item, size = 32) {
             shopItemsContainer.innerHTML += `
                 <div class="item-row bg-gold-color/30 rounded-lg p-3 flex justify-between items-center border border-gold-color/50 hover:bg-gold-color/40 cursor-pointer" onclick="buyItem('upgrade', ${upgCost})">
                     <div class="flex items-center">
-                        <span class="text-3xl mr-3">${upgItem.icon}</span>
+                        <span class="text-3xl mr-3">${renderIcon(upgItem, 32)}</span>
                      
                         <div>
                             <p class="font-bold text-gold-color">${upgItem.name} (Lv. ${gameState.weaponLevel})</p>
