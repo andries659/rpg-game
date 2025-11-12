@@ -55,13 +55,6 @@
                 padding: 24px;
             }
         }
-
-        .modal-content img {
-            display: inline-block !important;
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
-         }
         
         /* --- MODAL STYLES --- */
         .modal-overlay {
@@ -363,7 +356,7 @@
                 <div id="action-buttons-wrapper" class="md:flex-grow">
                   
                     <div id="action-buttons" class="flex flex-wrap justify-center gap-4">
-                        <button id="start-button" class="action-button btn-primary" onclick="startGame()">Start Descent</button>
+                        <button id="start-button" class="action-button btn-primary" onclick="startGame()"><img src="images/Continue.png" alt="alt" width="20" height="20">Start Descent</button>
                     </div>
                 </div>
             </div>
@@ -677,7 +670,7 @@ function renderIcon(item, size = 32) {
 
         function explore() {
             // FIX: Log the action taken
-            log("You decide to **Continue Descent**.", 'text-gray-400');
+            log("You decide to <b>Continue Descent</b>.", 'text-gray-400');
             
             clearTempBuffs();
             gameState.currentEnemy = null; 
@@ -733,7 +726,7 @@ function renderIcon(item, size = 32) {
 
         function enterShop() {
             // FIX: Log the action taken
-            log("You step into the dark **Black Market**.", 'gold-color');
+            log("You step into the local <b>Shop</b>.", 'gold-color');
 
             populateShopModal();
             openModal(shopModal);
@@ -764,7 +757,7 @@ function renderIcon(item, size = 32) {
                             </div>
                         </div>
                         <span class="font-bold 
-                            text-lg text-gold-color">${item.cost} 💰</span>
+                            text-lg text-gold-color">${item.cost} <img src="images/Coin.png" alt="alt" width="20" height="20"></span>
                     </div>
                 `;
             });
@@ -782,7 +775,7 @@ function renderIcon(item, size = 32) {
                                 Next cost: ${upgCost}</p>
                         </div>
                     </div>
-                    <span class="font-bold text-lg text-gold-color">${upgCost} 💰</span>
+                    <span class="font-bold text-lg text-gold-color">${upgCost} <img src="images/Coin.png" alt="alt" width="20" height="20"></span>
                 </div>
             `;
         }
@@ -852,7 +845,7 @@ function renderIcon(item, size = 32) {
         function openInventoryModal() {
             // FIX: Log opening only if not in combat (to prevent spam)
             if (!isCombatMode) {
-                log("You open your **Inventory**.", 'text-blue-400');
+                log("You open your <b>Inventory</b>.", 'text-blue-400');
             }
             populateInventoryModal();
             openModal(inventoryModal);
@@ -900,11 +893,11 @@ function renderIcon(item, size = 32) {
                     <p class="text-xs">${item.description}</p>`;
                 
                 if (item.isJunk) {
-                    tooltipContent += `<p class="text-xs mt-2 text-gold-color">Click to Sell (💰 ${item.sell} each)</p>`;
+                    tooltipContent += `<p class="text-xs mt-2 text-gold-color">Click to Sell (<img src="images/Coin.png" alt="alt" width="20" height="20"> ${item.sell} each)</p>`;
                 } else if (item.type === 'consumable' && !isCombatMode) {
                     tooltipContent += `<p class="text-xs mt-2 text-heal">Click to Use</p>`;
                 } else if (item.type === 'consumable' && isCombatMode) {
-                    tooltipContent += `<p class="text-xs mt-2 text-red-400">Click to Use (Enemy gets free attack!)</p>`;
+                    tooltipContent += `<p class="text-xs mt-2 text-red-400">Click to Use (Enemy gets a free attack!)</p>`;
                 }
 
                 tooltipContent += `</div>`;
@@ -976,7 +969,7 @@ function renderIcon(item, size = 32) {
 
             if (item.isJunk) {
                 actionButtonsContainer.innerHTML += `
-                    <button class="action-button btn-gold" onclick="confirmSellItem()">Sell One (💰 ${item.sell})</button>
+                    <button class="action-button btn-gold" onclick="confirmSellItem()">Sell One (<img src="images/Coin.png" alt="alt" width="20" height="20"> ${item.sell})</button>
                 `;
             }
             
@@ -1120,9 +1113,9 @@ function renderIcon(item, size = 32) {
             // FIX: Use the new function to get the unique item count
             const uniqueItemCount = countUniqueItems();
             updateButtons([
-                { text: `⚔️ Attack`, cssClass: 'btn-primary', handler: () => handleAttack() },
-                { text: `📦 Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
-                { text: `🏃 Flee`, cssClass: 'btn-secondary', handler: () => handleFlee() },
+                { text: `<img src="images/Attack.png" alt="alt" width="20" height="20"> Attack`, cssClass: 'btn-primary', handler: () => handleAttack() },
+                { text: `<img src="images/Inventory.png" alt="alt" width="20" height="20"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
+                { text: `<img src="images/Continue.png" alt="alt" width="20" height="20"> Flee`, cssClass: 'btn-secondary', handler: () => handleFlee() },
             ]);
         }
 
@@ -1232,9 +1225,9 @@ function renderIcon(item, size = 32) {
             const uniqueItemCount = countUniqueItems();
             log("The path continues deeper into the gloom. What do you do?");
             updateButtons([
-                { text: "➡️ Continue Descent", cssClass: 'btn-primary', handler: () => explore() },
-                { text: `📦 Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
-                { text: `💰 Visit Shop`, cssClass: 'btn-gold', handler: () => enterShop() }
+                { text: `<img src="images/Shop.png" alt="alt" width="20" height="20"> Continue Descent`, cssClass: 'btn-primary', handler: () => explore() },
+                { text: `<img src="images/Inventory.png" alt="alt" width="20" height="20"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
+                { text: `<img src="images/Shop.png" alt="alt" width="20" height="20"> Visit Shop`, cssClass: 'btn-gold', handler: () => enterShop() }
             ]);
         }
 
