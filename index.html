@@ -774,7 +774,7 @@ function renderIcon(item, size = 32) {
             shopItemsContainer.innerHTML += `
                 <div class="item-row bg-gold-color/30 rounded-lg p-3 flex justify-between items-center border border-gold-color/50 hover:bg-gold-color/40 cursor-pointer" onclick="buyItem('upgrade', ${upgCost})">
                     <div class="flex items-center">
-                        <span class="text-3xl mr-3">${renderIcon(item, 32)}</span>
+                        <span class="text-3xl mr-3">${upgItem.icon}</span>
                      
                         <div>
                             <p class="font-bold text-gold-color">${upgItem.name} (Lv. ${gameState.weaponLevel})</p>
