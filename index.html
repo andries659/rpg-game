@@ -1118,9 +1118,9 @@ function renderIcon(item, size = 32) {
             // FIX: Use the new function to get the unique item count
             const uniqueItemCount = countUniqueItems();
             updateButtons([
-                { text: `<img src="images/Attack.png" alt="alt" width="20" height="20"> Attack`, cssClass: 'btn-primary', handler: () => handleAttack() },
-                { text: `<img src="images/Inventory.png" alt="alt" width="20" height="20"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
-                { text: `<img src="images/Continue.png" alt="alt" width="20" height="20"> Flee`, cssClass: 'btn-secondary', handler: () => handleFlee() },
+                { text: `<img src="images/Attack.png" alt="alt" width="20" height="20" class="stat"> Attack`, cssClass: 'btn-primary', handler: () => handleAttack() },
+                { text: `<img src="images/Inventory.png" alt="alt" width="20" height="20" class="stat"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
+                { text: `<img src="images/Continue.png" alt="alt" width="20" height="20" class="stat"> Flee`, cssClass: 'btn-secondary', handler: () => handleFlee() },
             ]);
         }
 
@@ -1230,9 +1230,9 @@ function renderIcon(item, size = 32) {
             const uniqueItemCount = countUniqueItems();
             log("The path continues deeper into the gloom. What do you do?");
             updateButtons([
-                { text: `<img src="images/Shop.png" alt="alt" width="20" height="20"> Continue Descent`, cssClass: 'btn-primary', handler: () => explore() },
-                { text: `<img src="images/Inventory.png" alt="alt" width="20" height="20"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
-                { text: `<img src="images/Shop.png" alt="alt" width="20" height="20"> Visit Shop`, cssClass: 'btn-gold', handler: () => enterShop() }
+                { text: `<img src="images/Continue.png" alt="alt" width="20" height="20" class="stat"> Continue Descent`, cssClass: 'btn-primary', handler: () => explore() },
+                { text: `<img src="images/Inventory.png" alt="alt" width="20" height="20" class="stat"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
+                { text: `<img src="images/Shop.png" alt="alt" width="20" height="20" class="stat"> Visit Shop`, cssClass: 'btn-gold', handler: () => enterShop() }
             ]);
         }
 
