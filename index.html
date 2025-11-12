@@ -356,7 +356,7 @@
                 <div id="action-buttons-wrapper" class="md:flex-grow">
                   
                     <div id="action-buttons" class="flex flex-wrap justify-center gap-4">
-                        <button id="start-button" class="action-button btn-primary" onclick="startGame()"><img src="images/Start.png" alt="alt" width="40" height="40" class="stat">Start Descent</button>
+                        <button id="start-button" class="action-button btn-primary" onclick="startGame()"><img src="images/Start.png" alt="alt" width="40" height="40" class="stat"> Start Descent</button>
                     </div>
                 </div>
             </div>
@@ -367,7 +367,7 @@
  
     <div id="shop-modal-overlay" class="modal-overlay">
         <div class="modal-content">
-            <h2 class="text-2xl font-bold text-center mb-4 text-gold-color"><img src="images/Shop.png" alt="alt" width="20" height="20"> Shop</h2>
+            <h2 class="text-2xl font-bold text-center mb-4 text-gold-color"><img src="images/Shop.png" alt="alt" width="40" height="40"> Shop</h2>
             <div id="shop-items-container" class="space-y-2">
                 </div>
             <button class="action-button btn-gold w-full mt-4 mb-2" onclick="sellAllJunk()">Sell All Junk</button>
@@ -377,7 +377,7 @@
     
     <div id="inventory-modal-overlay" class="modal-overlay">
         <div class="modal-content !w-[450px] !max-w-[95%]"> 
-            <h2 class="text-2xl font-bold text-center mb-4 text-blue-400"><img src="images/Inventory.png" alt="alt" width="20" height="20"> Inventory</h2>
+            <h2 class="text-2xl font-bold text-center mb-4 text-blue-400"><img src="images/Inventory.png" alt="alt" width="40" height="40"> Inventory</h2>
             
             <div id="inventory-grid" class="border border-gray-600 rounded-lg p-2 bg-gray-700/30">
                 </div>
@@ -1118,9 +1118,9 @@ function renderIcon(item, size = 32) {
             // FIX: Use the new function to get the unique item count
             const uniqueItemCount = countUniqueItems();
             updateButtons([
-                { text: `<img src="images/Attack.png" alt="alt" width="20" height="20" class="stat"> Attack`, cssClass: 'btn-primary', handler: () => handleAttack() },
-                { text: `<img src="images/Inventory.png" alt="alt" width="20" height="20" class="stat"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
-                { text: `<img src="images/Continue.png" alt="alt" width="20" height="20" class="stat"> Flee`, cssClass: 'btn-secondary', handler: () => handleFlee() },
+                { text: `<img src="images/Attack.png" alt="alt" width="40" height="40" class="stat"> Attack`, cssClass: 'btn-primary', handler: () => handleAttack() },
+                { text: `<img src="images/Inventory.png" alt="alt" width="40" height="40" class="stat"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
+                { text: `<img src="images/Continue.png" alt="alt" width="40" height="40" class="stat"> Flee`, cssClass: 'btn-secondary', handler: () => handleFlee() },
             ]);
         }
 
@@ -1230,9 +1230,9 @@ function renderIcon(item, size = 32) {
             const uniqueItemCount = countUniqueItems();
             log("The path continues deeper into the gloom. What do you do?");
             updateButtons([
-                { text: `<img src="images/Continue.png" alt="alt" width="20" height="20" class="stat"> Continue Descent`, cssClass: 'btn-primary', handler: () => explore() },
-                { text: `<img src="images/Inventory.png" alt="alt" width="20" height="20" class="stat"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
-                { text: `<img src="images/Shop.png" alt="alt" width="20" height="20" class="stat"> Visit Shop`, cssClass: 'btn-gold', handler: () => enterShop() }
+                { text: `<img src="images/Continue.png" alt="alt" width="40" height="40" class="stat"> Continue Descent`, cssClass: 'btn-primary', handler: () => explore() },
+                { text: `<img src="images/Inventory.png" alt="alt" width="40" height="40" class="stat"> Inventory (${uniqueItemCount})`, cssClass: 'btn-heal', handler: () => openInventoryModal() },
+                { text: `<img src="images/Shop.png" alt="alt" width="40" height="40" class="stat"> Visit Shop`, cssClass: 'btn-gold', handler: () => enterShop() }
             ]);
         }
 
