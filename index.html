@@ -452,6 +452,17 @@
             // Upgrades 
             'upgrade': { name: "Weapon Sharpening", icon: '🔨', type: 'upgrade' },
         };
+        function renderIcon(item, size = 32) {
+    if (!item || !item.icon) return '';
+    const icon = item.icon;
+    // crude check for a path — adjust as needed
+    if (typeof icon === 'string' && (icon.includes('/') || icon.match(/\.(png|jpg|jpeg|svg|gif)$/i))) {
+        // return an <img> tag (use alt for accessibility)
+        return `<img src="${icon}" alt="${item.name}" width="${size}" height="${size}" style="object-fit:contain;display:inline-block;vertical-align:middle;" />`;
+    }
+    // otherwise it's probably an emoji or plain text
+    return `<span style="font-size:${Math.max(18, size)}px;display:inline-block;vertical-align:middle;">${icon}</span>`;
+}
         const monsters = [
             { name: "Giant Rat", hp: 4, attack: 1, gold: 5, exp: 5, drops: [['hp_minor', 20], ['loot_coin', 50]] },
             { name: "Goblin Scavenger", hp: 6, attack: 2, gold: 10, exp: 8, drops: [['hp_minor', 10], ['loot_shard', 30], ['loot_coin', 30]] },
@@ -736,7 +747,7 @@
                     <div class="item-row bg-gray-600/50 rounded-lg p-3 flex justify-between items-center border border-gray-700 hover:bg-gray-600 cursor-pointer" onclick="buyItem('${entry.id}')">
                         <div class="flex items-center">
    
-                            <span class="text-3xl mr-3">${item.icon}</span>
+                            <span class="text-3xl mr-3">${renderIcon(item, 32)}</span>
                             <div>
                                 <p class="font-bold">${item.name}</p>
             
@@ -891,7 +902,7 @@
                 
                 inventoryGrid.innerHTML += `
                     <div class="item-tile" onclick="${clickHandler}">
-                        <span class="item-icon-large">${item.icon}</span>
+                        <span class="item-icon-large">${renderIcon(item, 32)}</span>
                         <span class="item-count">${count}</span>
                         <span class="item-name-small">${item.name}</span>
                         ${tooltipContent}
@@ -942,7 +953,7 @@
             const count = gameState.inventory[itemId];
             
             document.getElementById('action-item-title').textContent = item.name;
-            document.getElementById('action-item-icon').textContent = item.icon;
+            document.getElementById('action-item-icon').innerHTML = renderIcon(item, 64);
             document.getElementById('action-item-count').textContent = `Quantity: x${count}`;
             document.getElementById('action-item-description').textContent = item.description;
 
