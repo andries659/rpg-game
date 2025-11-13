@@ -1041,41 +1041,46 @@ function renderIcon(item, size = 32) {
         /** Centralized function for item usage logic.
         * Returns true if used, false otherwise. */
         function useItem(itemId) {
-            const item = itemDB[itemId];
-            if (!item || item.type !== 'consumable') return false;
-            
-            // removeItemFromInventory will update the main button count
-            if (removeItemFromInventory(itemId)) {
-                if (item.effect.heal) {
-                    const healAmount = item.effect.heal;
-                    gameState.hp = Math.min(gameState.maxHp, gameState.hp + healAmount);
-                    log(`You use a **${item.name}**, restoring ${healAmount} HP.`, 'heal');
-                } else if (item.effect.attack) {
-                    clearTempBuffs();
-                    gameState.temporaryBuff = item.effect.attack;
-                    // Removed: gameState.attack += item.effect.attack; (Now calculated in updateStats)
-                    log(`You use a **${item.name}**! Attack increases by +${item.effect.attack}.`, 'buff');
-                }
-            
-                updateStats();
-                return true;
-            } else {
-                 log(`Error: Failed to use ${item.name}. None in inventory?`, 'text-red-400');
-                return false;
-            }
+    const item = itemDB[itemId];
+    if (!item || item.type !== 'consumable') return false;
+    
+    // removeItemFromInventory will update the main button count
+    if (removeItemFromInventory(itemId)) {
+        const itemIconHTML = `<img src="${item.icon}" alt="${item.name}" width="20" height="20" style="vertical-align:middle;margin-right:6px;">`;
+
+        if (item.effect.heal) {
+            const healAmount = item.effect.heal;
+            gameState.hp = Math.min(gameState.maxHp, gameState.hp + healAmount);
+            log(`You use ${itemIconHTML}<b>${item.name}</b>, restoring ${healAmount} HP.`, 'heal');
+        } else if (item.effect.attack) {
+            clearTempBuffs();
+            gameState.temporaryBuff = item.effect.attack;
+            log(`You use ${itemIconHTML}<b>${item.name}</b>! Attack increases by +${item.effect.attack}.`, 'buff');
+        }
+
+        updateStats();
+        return true;
+    } else {
+        log(`Error: Failed to use ${item.name}. None in inventory?`, 'text-red-400');
+        return false;
+    }
         }
         
         /** Logic for selling a single loot item from the inventory. */
         function sellSingleItem(itemId) {
-            const item = itemDB[itemId];
-            if (!item || !item.isJunk) return;
+    const item = itemDB[itemId];
+    if (!item || !item.isJunk) return;
 
-            // removeItemFromInventory will update the main button count
-            if (removeItemFromInventory(itemId)) {
-                gameState.gold += item.sell;
-                log(`Sold one **${item.name}** for ${item.sell} gold.`, 'gold-color');
-            }
-            updateStats();
+    if (removeItemFromInventory(itemId)) {
+        gameState.gold += item.sell;
+
+        const itemIconHTML = `<img src="${item.icon}" alt="${item.name}" width="20" height="20" style="vertical-align:middle;margin-right:6px;">`;
+        const goldIconHTML = `<img src="images/Gold.png" alt="Gold" width="20" height="20" style="vertical-align:middle;margin-right:6px;">`;
+
+        log(`Sold one ${itemIconHTML}<b>${item.name}</b> for ${goldIconHTML}${item.sell} gold.`, 'gold-color');
+    }
+
+    updateStats();
         }
 
         /** Centralized function for enemy attack after player uses an item in combat. */
