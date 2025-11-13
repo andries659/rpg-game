@@ -724,7 +724,7 @@ function renderIcon(item, size = 32) {
                 if (Math.random() * 100 < chance) {
                     // Use addItemToInventory which updates the button count
                     addItemToInventory(itemId); 
-                    itemsFound.push(`<img src="${itemDB[itemId].icon}" alt="${itemDB[itemId].name}" width="20" height="20"> ${itemDB[itemId].name}`);
+                    itemsFound.push(`<img src="${itemDB[itemId].icon}" alt="${itemDB[itemId].name}" width="20" height="20" class="stat"> ${itemDB[itemId].name}`);
                 }
             });
             if (itemsFound.length > 0) {
