@@ -1046,7 +1046,7 @@ function renderIcon(item, size = 32) {
     
     // removeItemFromInventory will update the main button count
     if (removeItemFromInventory(itemId)) {
-        const itemIconHTML = `<img src="${item.icon}" alt="${item.name}" width="20" height="20" style="vertical-align:middle;margin-right:6px;">`;
+        const itemIconHTML = `<img src="${item.icon}" alt="${item.name}" width="20" height="20" class="stat">`;
 
         if (item.effect.heal) {
             const healAmount = item.effect.heal;
@@ -1074,8 +1074,8 @@ function renderIcon(item, size = 32) {
     if (removeItemFromInventory(itemId)) {
         gameState.gold += item.sell;
 
-        const itemIconHTML = `<img src="${item.icon}" alt="${item.name}" width="20" height="20" style="vertical-align:middle;margin-right:6px;">`;
-        const goldIconHTML = `<img src="images/Gold.png" alt="Gold" width="20" height="20" style="vertical-align:middle;margin-right:6px;">`;
+        const itemIconHTML = `<img src="${item.icon}" alt="${item.name}" width="20" height="20" class="stat">`;
+        const goldIconHTML = `<img src="images/Gold.png" alt="Gold" width="20" height="20" class="stat">`;
 
         log(`Sold one ${itemIconHTML}<b>${item.name}</b> for ${goldIconHTML}${item.sell} gold.`, 'gold-color');
     }
