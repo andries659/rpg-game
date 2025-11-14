@@ -374,7 +374,7 @@
 <div class="mb-4">
     <label class="font-bold">Sound Volume:</label>
     <div class="flex items-center gap-2">
-        <input id="opt-volume" type="range" min="0" max="100" oninput="updateOptionVolume(this.value)">
+        <input id="opt-volume" type="range" min="0" max="100" value="100" oninput="updateOptionVolume(this.value)">
         <span id="opt-volume-val" class="text-amber-300 font-bold">100</span>
     </div>
 </div>
@@ -382,7 +382,7 @@
 <div class="mb-4">
     <label class="font-bold">Text Speed:</label>
     <div class="flex items-center gap-2">
-        <input id="opt-text-speed" type="range" min="10" max="200" oninput="updateTextSpeed(this.value)">
+        <input id="opt-text-speed" type="range" min="10" max="200" value="100" oninput="updateTextSpeed(this.value)">
         <span id="opt-text-speed-val" class="text-amber-300 font-bold">100</span>
     </div>
 </div>
@@ -390,7 +390,7 @@
 <div class="mb-4">
     <label class="font-bold">Enemy Encounter Chance:</label>
     <div class="flex items-center gap-2">
-        <input id="opt-spawn" type="range" min="20" max="90" oninput="updateEnemySpawnRate(this.value)">
+        <input id="opt-spawn" type="range" min="20" max="90" value="60" oninput="updateEnemySpawnRate(this.value)">
         <span id="opt-spawn-val" class="text-amber-300 font-bold">60%</span>
     </div>
 </div>
@@ -424,8 +424,7 @@
         const settings = {
             volume: 100,
             textSpeed: 100,
-            spawnChance: 0.6,
-            brightness: 10
+            spawnChance: 0.6
         };
 
         function updateOptionVolume(val) {
