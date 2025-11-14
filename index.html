@@ -755,6 +755,16 @@ function closeCreditsModal() {
     closeModal(document.getElementById('credits-modal-overlay'));
 }
 
+        function openNewsModal() {
+    const modal = document.getElementById('news-modal');
+    modal.style.display = 'flex';
+    loadNews(); // make sure this function exists
+}
+
+function closeNewsModal() {
+    const modal = document.getElementById('news-modal');
+    modal.style.display = 'none';
+}
         
         function toggleMenuMusic() {
     const audio = document.getElementById('menu-music');
