@@ -439,11 +439,11 @@
     </div>
 
     <!-- NEWS MODAL -->
-<div id="news-modal" class="modal-overlay">
-    <div class="modal-content">
-        <h2 class="text-3xl font-bold mb-4 text-amber-400 text-center">News</h2>
-        <div id="news-container"></div>
-        <button onclick="closeNewsModal()">Close</button>
+<div id="news-modal" class="modal-overlay fixed inset-0 bg-black/50 z-30 hidden flex justify-center items-center">
+    <div class="modal-content !w-[500px] !p-6 text-left bg-gray-800 rounded-lg relative">
+        <h2 class="text-3xl font-bold mb-4 text-amber-400 text-center"><img src="images/News.png" alt="Shop" width="40" height="40" class="stat"> News</h2>
+        <div id="news-container" class="flex flex-col gap-4 max-h-[400px] overflow-y-auto"></div>
+        <button class="action-button btn-secondary mt-4 w-full" onclick="closeNewsModal()">Close</button>
     </div>
 </div>
 
@@ -719,45 +719,42 @@ function closeCreditsModal() {
 }
 
 function openNewsModal() {
+    document.getElementById('news-modal').classList.remove('hidden');
     document.getElementById('news-modal').style.display = 'flex';
     loadNews();
 }
 
 function closeNewsModal() {
+    document.getElementById('news-modal').classList.add('hidden');
     document.getElementById('news-modal').style.display = 'none';
 }
 
-// load news
 async function loadNews() {
     const container = document.getElementById('news-container');
     container.innerHTML = '';
 
-    try {
-        // For testing without server, you can hardcode the JSON here
-        const newsList = [
-            { "header": "Update 1.1 Released", "content": "New dungeons and weapons!\nCheck them out!", "date": "2025-11-14" },
-            { "header": "Server Maintenance", "content": "Servers down 2-4AM UTC.\nPlan accordingly.", "date": "2025-11-13" }
-        ];
+    const newsList = [
+        { "header": "Update 1.1 Released", "content": "New dungeons and weapons!\nCheck them out!", "date": "2025-11-14" },
+        { "header": "Server Maintenance", "content": "Servers down 2-4AM UTC.\nPlan accordingly.", "date": "2025-11-13" }
+    ];
 
-        newsList.forEach((news, index) => {
-            const bubble = document.createElement('div');
-            bubble.className = 'news-bubble';
-            bubble.innerHTML = `
-                <div class="news-header">${news.header}</div>
-                <div class="news-date">${news.date}</div>
-                <div class="news-content" id="news-content-${index}">${news.content}</div>
-            `;
-            bubble.addEventListener('click', () => {
-                const contentDiv = document.getElementById(`news-content-${index}`);
-                contentDiv.style.display = contentDiv.style.display === 'block' ? 'none' : 'block';
-            });
-            container.appendChild(bubble);
+    newsList.forEach((news, index) => {
+        const bubble = document.createElement('div');
+        bubble.className = 'news-bubble bg-gray-700 p-3 rounded-lg cursor-pointer';
+
+        bubble.innerHTML = `
+            <div class="news-header font-bold">${news.header}</div>
+            <div class="news-date text-gray-400 text-sm text-right">${news.date}</div>
+            <div class="news-content mt-2 whitespace-pre-wrap hidden" id="news-content-${index}">${news.content}</div>
+        `;
+
+        bubble.addEventListener('click', () => {
+            const contentDiv = document.getElementById(`news-content-${index}`);
+            contentDiv.classList.toggle('hidden');
         });
 
-    } catch (err) {
-        console.error('Failed to load news:', err);
-        container.innerHTML = '<p style="color:red;">Failed to load news.</p>';
-    }
+        container.appendChild(bubble);
+    });
 }
         
         function toggleMenuMusic() {
