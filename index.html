@@ -548,9 +548,19 @@
 
         function promptExploration(){ const uniqueItemCount = countUniqueItems(); log("The path continues deeper into the gloom. What do you do?"); updateButtons([{ text: `<img src="images/Continue.png" alt="Continue" width="40" height="40" class="stat"> Continue Descent`, cssClass:'btn-primary', handler: ()=> explore() },{ text: `<img src="images/Inventory.png" alt="Inventory" width="40" height="40" class="stat"> Inventory (${uniqueItemCount})`, cssClass:'btn-heal', handler: ()=> openInventoryModal() },{ text: `<img src="images/Shop.png" alt="Shop" width="40" height="40" class="stat"> Visit Shop`, cssClass:'btn-gold', handler: ()=> enterShop() }]); }
 
-        // INIT
-        window.onload = function(){ updateStats(); // ensure options inputs match settings
-            document.getElementById('opt-volume').value = settings.volume; document.getElementById('opt-text-speed').value = settings.textSpeed; document.getElementById('opt-spawn').value = Math.round(settings.spawnChance*100); document.getElementById('opt-bright').value = settings.brightness; };
+        function toggleMenuMusic(){ const audio = document.getElementById('menu-music'); const btn = document.getElementById('music-toggle'); if(!audio) return; if(audio.paused){ audio.volume = settings.volume/100; audio.play().catch(()=>{}); if(btn) btn.textContent='Mute Music'; } else { audio.pause(); if(btn) btn.textContent='Play Music'; } }
+function initMenuAudioOnGesture(){ const audio = document.getElementById('menu-music'); if(!audio) return; audio.volume = settings.volume/100; const tryPlay = ()=>{ audio.play().then(()=>{ const btn = document.getElementById('music-toggle'); if(btn) btn.textContent = audio.paused ? 'Play Music' : 'Mute Music'; }).catch(()=>{}); document.removeEventListener('click', tryPlay); }; document.addEventListener('click', tryPlay); }
+
+
+// INIT
+window.addEventListener('DOMContentLoaded', ()=>{ // show menu, hide game
+document.getElementById('main-menu').style.display='flex'; document.getElementById('game-root').style.display='none';
+// set slider displays
+document.getElementById('opt-volume-val').textContent = settings.volume; document.getElementById('opt-text-speed-val').textContent = settings.textSpeed; document.getElementById('opt-spawn-val').textContent = Math.round(settings.spawnChance*100)+'%';
+// set audio volume
+const audio = document.getElementById('menu-music'); if(audio) audio.volume = settings.volume/100; // attempt play on gesture
+initMenuAudioOnGesture();
+});
     </script>
 </body>
 </html>
