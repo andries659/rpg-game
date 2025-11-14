@@ -548,19 +548,81 @@
 
         function promptExploration(){ const uniqueItemCount = countUniqueItems(); log("The path continues deeper into the gloom. What do you do?"); updateButtons([{ text: `<img src="images/Continue.png" alt="Continue" width="40" height="40" class="stat"> Continue Descent`, cssClass:'btn-primary', handler: ()=> explore() },{ text: `<img src="images/Inventory.png" alt="Inventory" width="40" height="40" class="stat"> Inventory (${uniqueItemCount})`, cssClass:'btn-heal', handler: ()=> openInventoryModal() },{ text: `<img src="images/Shop.png" alt="Shop" width="40" height="40" class="stat"> Visit Shop`, cssClass:'btn-gold', handler: ()=> enterShop() }]); }
 
-        function toggleMenuMusic(){ const audio = document.getElementById('menu-music'); const btn = document.getElementById('music-toggle'); if(!audio) return; if(audio.paused){ audio.volume = settings.volume/100; audio.play().catch(()=>{}); if(btn) btn.textContent='Mute Music'; } else { audio.pause(); if(btn) btn.textContent='<img src="images/MusicPlay.png" alt="alt" width="40" height="40" class="stat"> Play Music'; } }
-function initMenuAudioOnGesture(){ const audio = document.getElementById('menu-music'); if(!audio) return; audio.volume = settings.volume/100; const tryPlay = ()=>{ audio.play().then(()=>{ const btn = document.getElementById('music-toggle'); if(btn) btn.textContent = audio.paused ? '<img src="images/MusicPlay.png" alt="alt" width="40" height="40" class="stat"> Play Music' : '<img src="images/MusicMute.png" alt="alt" width="40" height="40" class="stat"> Mute Music'; }).catch(()=>{}); document.removeEventListener('click', tryPlay); }; document.addEventListener('click', tryPlay); }
+        function toggleMenuMusic() {
+    const audio = document.getElementById('menu-music');
+    const btn = document.getElementById('music-toggle');
+    if (!audio) return;
+
+    if (audio.paused) {
+        // PLAY
+        audio.volume = settings.volume / 100;
+        audio.play().catch(() => {});
+        if (btn) {
+            btn.innerHTML = 
+                '<img src="images/MusicMute.png" width="40" height="40" class="stat"> Mute Music';
+        }
+    } else {
+        // PAUSE
+        audio.pause();
+        if (btn) {
+            btn.innerHTML = 
+                '<img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music';
+        }
+    }
+}
+
+
+// Browser gesture unlock (autoplay fix)
+function initMenuAudioOnGesture() {
+    const audio = document.getElementById('menu-music');
+    if (!audio) return;
+
+    audio.volume = settings.volume / 100;
+
+    const tryPlay = () => {
+        audio.play()
+            .then(() => {
+                const btn = document.getElementById('music-toggle');
+                if (btn) {
+                    if (audio.paused) {
+                        btn.innerHTML =
+                            '<img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music';
+                    } else {
+                        btn.innerHTML =
+                            '<img src="images/MusicMute.png" width="40" height="40" class="stat"> Mute Music';
+                    }
+                }
+            })
+            .catch(() => {});
+
+        document.removeEventListener('click', tryPlay);
+    };
+
+    document.addEventListener('click', tryPlay);
+}
 
 
 // INIT
-window.addEventListener('DOMContentLoaded', ()=>{ // show menu, hide game
-document.getElementById('main-menu').style.display='flex'; document.getElementById('game-root').style.display='none';
-// set slider displays
-document.getElementById('opt-volume-val').textContent = settings.volume; document.getElementById('opt-text-speed-val').textContent = settings.textSpeed; document.getElementById('opt-spawn-val').textContent = Math.round(settings.spawnChance*100)+'%';
-// set audio volume
-const audio = document.getElementById('menu-music'); if(audio) audio.volume = settings.volume/100; // attempt play on gesture
-initMenuAudioOnGesture();
+window.addEventListener('DOMContentLoaded', () => {
+
+    // show menu, hide game UI
+    document.getElementById('main-menu').style.display = 'flex';
+    document.getElementById('game-root').style.display = 'none';
+
+    // slider numeric labels
+    document.getElementById('opt-volume-val').textContent = settings.volume;
+    document.getElementById('opt-text-speed-val').textContent = settings.textSpeed;
+    document.getElementById('opt-spawn-val').textContent =
+        Math.round(settings.spawnChance * 100) + '%';
+
+    // audio volume before user gesture
+    const audio = document.getElementById('menu-music');
+    if (audio) audio.volume = settings.volume / 100;
+
+    // unlock audio when user clicks anywhere
+    initMenuAudioOnGesture();
 });
+
     </script>
 </body>
 </html>
