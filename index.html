@@ -312,18 +312,17 @@
     <!-- MAIN MENU OVERLAY -->
     <div id="main-menu-overlay" class="modal-overlay active" style="display:flex;">
         <div class="modal-content !w-[350px] text-center">
+            <audio id="menu-music" src="music/MAINMENU.mp3" loop preload="auto"></audio>
             <h2 class="text-3xl font-bold mb-4 text-amber-400">The Iron Tomb</h2>
-
-            <button class="action-button btn-primary w-full mb-3" onclick="startGame(); closeMainMenu();">Start Game</button>
-
-            <button class="action-button btn-secondary w-full mb-3" onclick="openOptionsModal()"><img src="images/Settings.png" alt="alt" width="28" height="28" class="stat"> Options</button>
-
-            <button class="action-button btn-secondary w-full" onclick="closeMainMenu()">Close Menu</button>
+            <button class="action-button btn-primary w-full mb-3" onclick="startGame(); closeMainMenu();"><img src="images/Start.png" alt="alt" width="40" height="40" class="stat"> Start Game</button>
+            <button class="action-button btn-secondary w-full mb-3" onclick="openOptionsModal()"><img src="images/Settings.png" alt="alt" width="40" height="40" class="stat"> Options</button>
+            <button id="music-toggle" class="action-button btn-gold w-64" onclick="toggleMenuMusic()">Play Music</button>
+            <p class="mt-4 text-sm text-gray-400">Tip: click anywhere to allow autoplay in some browsers.</p>
         </div>
     </div>
 
     <div class="game-container">
-        <h1 class="text-3xl text-center font-bold mb-4 text-amber-500 tracking-wide">The Iron Tomb 🗝️</h1>
+        <h1 class="text-3xl text-center font-bold mb-4 text-amber-500 tracking-wide">The Iron Tomb</h1>
 
         <div class="stats-panel" id="stats-panel">
             <div class="grid grid-cols-2 gap-2 text-sm sm:text-base mb-2">
