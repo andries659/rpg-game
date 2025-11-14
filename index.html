@@ -439,14 +439,11 @@
     </div>
 
     <!-- NEWS MODAL -->
-<div id="news-modal" class="modal-overlay" style="display:none; justify-content:center;">
-    <div class="modal-content !w-[500px] !p-6 text-left relative">
+<div id="news-modal" class="modal-overlay">
+    <div class="modal-content">
         <h2 class="text-3xl font-bold mb-4 text-amber-400 text-center">News</h2>
-        <div id="news-container" class="flex flex-col gap-4 max-h-[400px] overflow-y-auto">
-            <!-- News items will be injected here dynamically -->
-        </div>
-        <button class="action-button btn-secondary mt-4 w-full"
-            onclick="closeNewsModal()">Close</button>
+        <div id="news-container"></div>
+        <button onclick="closeNewsModal()">Close</button>
     </div>
 </div>
 
@@ -632,40 +629,6 @@ function updateEnemySpawnRate(val) {
             hp: document.getElementById('player-hp'), maxHp: document.getElementById('player-max-hp'), gold: document.getElementById('player-gold'), attack: document.getElementById('player-attack'), weaponLevel: document.getElementById('player-weapon-level'), buffStatus: document.getElementById('player-buff-status'), level: document.getElementById('player-level'), exp: document.getElementById('player-exp'), expNext: document.getElementById('player-exp-next')
         };
 
-        // news code
-        async function loadNews() {
-    const container = document.getElementById('news-container');
-    container.innerHTML = ''; // clear previous news
-
-    try {
-        const response = await fetch('news/news.json');
-        const newsList = await response.json();
-
-        newsList.forEach((news, index) => {
-            const bubble = document.createElement('div');
-            bubble.className = 'news-bubble';
-
-            bubble.innerHTML = `
-                <div class="news-header">${news.header}</div>
-                <div class="news-date">${news.date}</div>
-                <div class="news-content" id="news-content-${index}">${news.content}</div>
-            `;
-
-            // toggle content on click
-            bubble.addEventListener('click', () => {
-                const contentDiv = document.getElementById(`news-content-${index}`);
-                const isVisible = contentDiv.style.display === 'block';
-                contentDiv.style.display = isVisible ? 'none' : 'block';
-            });
-
-            container.appendChild(bubble);
-        });
-    } catch (err) {
-        console.error('Failed to load news:', err);
-        container.innerHTML = '<p style="color:red;">Failed to load news.</p>';
-    }
-}
-
         function isMobileDevice(){ return window.innerWidth < 768; }
         function log(message, className=''){ const entry = document.createElement('div'); entry.className = 'log-entry ' + className; entry.innerHTML = message; logElement.appendChild(entry); logElement.scrollTop = logElement.scrollHeight; }
 
@@ -755,15 +718,46 @@ function closeCreditsModal() {
     closeModal(document.getElementById('credits-modal-overlay'));
 }
 
-        function openNewsModal() {
-    const modal = document.getElementById('news-modal');
-    modal.style.display = 'flex';
-    loadNews(); // make sure this function exists
+function openNewsModal() {
+    document.getElementById('news-modal').style.display = 'flex';
+    loadNews();
 }
 
 function closeNewsModal() {
-    const modal = document.getElementById('news-modal');
-    modal.style.display = 'none';
+    document.getElementById('news-modal').style.display = 'none';
+}
+
+// load news
+async function loadNews() {
+    const container = document.getElementById('news-container');
+    container.innerHTML = '';
+
+    try {
+        // For testing without server, you can hardcode the JSON here
+        const newsList = [
+            { "header": "Update 1.1 Released", "content": "New dungeons and weapons!\nCheck them out!", "date": "2025-11-14" },
+            { "header": "Server Maintenance", "content": "Servers down 2-4AM UTC.\nPlan accordingly.", "date": "2025-11-13" }
+        ];
+
+        newsList.forEach((news, index) => {
+            const bubble = document.createElement('div');
+            bubble.className = 'news-bubble';
+            bubble.innerHTML = `
+                <div class="news-header">${news.header}</div>
+                <div class="news-date">${news.date}</div>
+                <div class="news-content" id="news-content-${index}">${news.content}</div>
+            `;
+            bubble.addEventListener('click', () => {
+                const contentDiv = document.getElementById(`news-content-${index}`);
+                contentDiv.style.display = contentDiv.style.display === 'block' ? 'none' : 'block';
+            });
+            container.appendChild(bubble);
+        });
+
+    } catch (err) {
+        console.error('Failed to load news:', err);
+        container.innerHTML = '<p style="color:red;">Failed to load news.</p>';
+    }
 }
         
         function toggleMenuMusic() {
