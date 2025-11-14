@@ -312,7 +312,7 @@
     <!-- MAIN MENU OVERLAY -->
     <div id="main-menu-overlay" class="modal-overlay active" style="display:flex;">
         <div class="modal-content !w-[350px] text-center">
-            <audio id="menu-music" src="music/MAINMENU.mp3" loop preload="auto"></audio>
+            <audio id="menu-music" src="music/MAINMENU.mpeg" loop preload="auto"></audio>
             <h2 class="text-3xl font-bold mb-4 text-amber-400">The Iron Tomb</h2>
             <button class="action-button btn-primary w-full mb-3" onclick="startGame(); closeMainMenu();"><img src="images/Start.png" alt="alt" width="40" height="40" class="stat"> Start Game</button>
             <button class="action-button btn-secondary w-full mb-3" onclick="openOptionsModal()"><img src="images/Settings.png" alt="alt" width="40" height="40" class="stat"> Options</button>
@@ -369,33 +369,21 @@
 
     <!-- Options Modal -->
     <div id="options-modal-overlay" class="modal-overlay">
-        <div class="modal-content !w-[380px]">
-            <h2 class="text-2xl font-bold text-center mb-4 text-blue-300">⚙️ Options</h2>
-
-            <div class="mb-4">
-                <label class="font-bold">Sound Volume:</label>
-                <input id="opt-volume" type="range" min="0" max="100" value="100" class="w-full" oninput="updateOptionVolume(this.value)">
-            </div>
-
-            <div class="mb-4">
-                <label class="font-bold">Text Speed:</label>
-                <input id="opt-text-speed" type="range" min="10" max="200" value="100" class="w-full" oninput="updateTextSpeed(this.value)">
-                <p class="text-xs mt-1 opacity-70">Affects log typing effect.</p>
-            </div>
-
-            <div class="mb-4">
-                <label class="font-bold">Enemy Encounter Chance:</label>
-                <input id="opt-spawn" type="range" min="20" max="90" value="60" class="w-full" oninput="updateEnemySpawnRate(this.value)">
-            </div>
-
-            <div class="mb-4">
-                <label class="font-bold">Brightness:</label>
-                <input id="opt-bright" type="range" min="1" max="100" value="10" class="w-full" oninput="updateBrightness(this.value)">
-            </div>
-
-            <button class="action-button btn-secondary w-full" onclick="closeOptionsModal()">Close</button>
-        </div>
-    </div>
+<div class="modal-content">
+<h2 class="text-2xl font-bold text-center mb-4"><img src="images/Settings.png" alt="alt" width="40" height="40" class="stat"> Options</h2>
+<div class="mb-4"><label class="font-bold">Sound Volume:</label>
+<input id="opt-volume" type="range" min="0" max="100" value="100" oninput="updateOptionVolume(this.value)"> <span id="opt-volume-val"></span>
+</div>
+<div class="mb-4"><label class="font-bold">Text Speed:</label>
+<input id="opt-text-speed" type="range" min="10" max="200" value="100" oninput="updateTextSpeed(this.value)"> <span id="opt-text-speed-val"></span>
+<p class="text-xs mt-1">Affects log typing effect.</p>
+</div>
+<div class="mb-4"><label class="font-bold">Enemy Encounter Chance:</label>
+<input id="opt-spawn" type="range" min="20" max="90" value="60" oninput="updateEnemySpawnRate(this.value)"> <span id="opt-spawn-val"></span>
+</div>
+<button class="action-button btn-secondary w-full" onclick="closeOptionsModal()">Close</button>
+</div>
+</div>
 
     <!-- Inventory Modal -->
     <div id="inventory-modal-overlay" class="modal-overlay">
