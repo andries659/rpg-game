@@ -316,8 +316,8 @@
             <h2 class="text-3xl font-bold mb-4 text-amber-400">The Iron Tomb</h2>
             <button class="action-button btn-primary w-full mb-3" onclick="startGame(); closeMainMenu();"><img src="images/Start.png" alt="alt" width="40" height="40" class="stat"> Start Game</button>
             <button class="action-button btn-secondary w-full mb-3" onclick="openOptionsModal()"><img src="images/Settings.png" alt="alt" width="40" height="40" class="stat"> Options</button>
-            <button id="music-toggle" class="action-button btn-gold w-64" onclick="toggleMenuMusic()">Play Music</button>
-            <p class="mt-4 text-sm text-gray-400">Tip: click anywhere to allow autoplay in some browsers.</p>
+            <button id="music-toggle" class="action-button btn-gold w-64" onclick="toggleMenuMusic()"><img src="images/MusicPlay.png" alt="alt" width="40" height="40" class="stat"> Play Music</button>
+            <p class="mt-4 text-sm text-gray-400">Tip: To apply sound changes, just mute the music, and play it again!.</p>
         </div>
     </div>
 
@@ -548,8 +548,8 @@
 
         function promptExploration(){ const uniqueItemCount = countUniqueItems(); log("The path continues deeper into the gloom. What do you do?"); updateButtons([{ text: `<img src="images/Continue.png" alt="Continue" width="40" height="40" class="stat"> Continue Descent`, cssClass:'btn-primary', handler: ()=> explore() },{ text: `<img src="images/Inventory.png" alt="Inventory" width="40" height="40" class="stat"> Inventory (${uniqueItemCount})`, cssClass:'btn-heal', handler: ()=> openInventoryModal() },{ text: `<img src="images/Shop.png" alt="Shop" width="40" height="40" class="stat"> Visit Shop`, cssClass:'btn-gold', handler: ()=> enterShop() }]); }
 
-        function toggleMenuMusic(){ const audio = document.getElementById('menu-music'); const btn = document.getElementById('music-toggle'); if(!audio) return; if(audio.paused){ audio.volume = settings.volume/100; audio.play().catch(()=>{}); if(btn) btn.textContent='Mute Music'; } else { audio.pause(); if(btn) btn.textContent='Play Music'; } }
-function initMenuAudioOnGesture(){ const audio = document.getElementById('menu-music'); if(!audio) return; audio.volume = settings.volume/100; const tryPlay = ()=>{ audio.play().then(()=>{ const btn = document.getElementById('music-toggle'); if(btn) btn.textContent = audio.paused ? 'Play Music' : 'Mute Music'; }).catch(()=>{}); document.removeEventListener('click', tryPlay); }; document.addEventListener('click', tryPlay); }
+        function toggleMenuMusic(){ const audio = document.getElementById('menu-music'); const btn = document.getElementById('music-toggle'); if(!audio) return; if(audio.paused){ audio.volume = settings.volume/100; audio.play().catch(()=>{}); if(btn) btn.textContent='Mute Music'; } else { audio.pause(); if(btn) btn.textContent='<img src="images/MusicPlay.png" alt="alt" width="40" height="40" class="stat"> Play Music'; } }
+function initMenuAudioOnGesture(){ const audio = document.getElementById('menu-music'); if(!audio) return; audio.volume = settings.volume/100; const tryPlay = ()=>{ audio.play().then(()=>{ const btn = document.getElementById('music-toggle'); if(btn) btn.textContent = audio.paused ? '<img src="images/MusicPlay.png" alt="alt" width="40" height="40" class="stat"> Play Music' : '<img src="images/MusicMute.png" alt="alt" width="40" height="40" class="stat"> Mute Music'; }).catch(()=>{}); document.removeEventListener('click', tryPlay); }; document.addEventListener('click', tryPlay); }
 
 
 // INIT
