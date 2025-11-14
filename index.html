@@ -311,15 +311,39 @@
 
     <!-- MAIN MENU OVERLAY -->
     <div id="main-menu-overlay" class="modal-overlay active" style="display:flex;">
-        <div class="modal-content !w-[350px] text-center">
-            <audio id="menu-music" src="music/MAINMENU.mpeg" loop preload="auto"></audio>
-            <h2 class="text-3xl font-bold mb-4 text-amber-400">The Iron Tomb</h2>
-            <button class="action-button btn-primary w-full mb-3" onclick="startGame(); closeMainMenu();"><img src="images/Start.png" alt="alt" width="40" height="40" class="stat"> Start Game</button>
-            <button class="action-button btn-secondary w-full mb-3" onclick="openOptionsModal()"><img src="images/Settings.png" alt="alt" width="40" height="40" class="stat"> Options</button>
-            <button id="music-toggle" class="action-button btn-gold w-64" onclick="toggleMenuMusic()"><img src="images/MusicPlay.png" alt="alt" width="40" height="40" class="stat"> Play Music</button>
-            <p class="mt-4 text-sm text-gray-400">Tip: To apply sound changes, just mute the music, and play it again!.</p>
-        </div>
+    <div class="modal-content !w-[450px] !p-8 text-center">
+        
+        <audio id="menu-music" src="music/MAINMENU.mpeg" loop preload="auto"></audio>
+
+        <h2 class="text-4xl font-bold mb-6 text-amber-400">The Iron Tomb</h2>
+
+        <button class="action-button btn-primary w-full mb-4"
+            onclick="startGame(); closeMainMenu();">
+            <img src="images/Start.png" width="40" height="40" class="stat"> Start Game
+        </button>
+
+        <button class="action-button btn-secondary w-full mb-4"
+            onclick="openOptionsModal()">
+            <img src="images/Settings.png" width="40" height="40" class="stat"> Options
+        </button>
+
+        <button class="action-button btn-secondary w-full mb-4"
+            onclick="openHelpModal()">
+            <img src="images/Help.png" width="40" height="40" class="stat"> How to Play
+        </button>
+
+        <button class="action-button btn-secondary w-full mb-6"
+            onclick="openCreditsModal()">
+            <img src="images/Credits.png" width="40" height="40" class="stat"> Credits
+        </button>
+
+        <button id="music-toggle" class="action-button btn-gold w-full mb-3"
+            onclick="toggleMenuMusic()">
+            <img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music
+        </button>
+
     </div>
+</div>
 
     <div class="game-container">
         <h1 class="text-3xl text-center font-bold mb-4 text-amber-500 tracking-wide">The Iron Tomb</h1>
@@ -366,6 +390,52 @@
             <button class="action-button btn-secondary w-full" onclick="closeShopModal()">Leave Shop</button>
         </div>
     </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal-overlay" class="modal-overlay">
+    <div class="modal-content !w-[500px] !p-6">
+        <h2 class="text-2xl font-bold mb-4 text-blue-300">📘 How to Play</h2>
+
+        <p class="mb-3">
+            Welcome to <span class="text-amber-300 font-bold">The Iron Tomb</span>! 
+            Your goal is to explore the deadly dungeon, defeat enemies, collect items,
+            and survive as long as possible.
+        </p>
+
+        <ul class="list-disc pl-6 space-y-2 text-left">
+            <li>⚔️ <strong>Attack</strong> enemies to defeat them and gain XP.</li>
+            <li>🛡️ <strong>Use items</strong> such as potions to heal or boost stats.</li>
+            <li>🎒 <strong>Manage your inventory</strong> to stay prepared.</li>
+            <li>💰 <strong>Collect loot</strong> to increase your wealth.</li>
+            <li>📈 <strong>Level up</strong> to increase attack power and max HP.</li>
+            <li>🚪 <strong>Explore rooms</strong> for danger, treasure, or relief.</li>
+        </ul>
+
+        <button class="action-button btn-secondary w-full mt-6"
+            onclick="closeHelpModal()">
+            Close
+        </button>
+    </div>
+</div>
+
+    <!-- Credits Modal -->
+    <div id="credits-modal-overlay" class="modal-overlay">
+    <div class="modal-content !w-[450px] !p-6">
+        <h2 class="text-2xl font-bold mb-4 text-amber-300">🎬 Credits</h2>
+
+        <p class="mb-2">Game Design: <span class="font-bold">Andries</span></p>
+        <p class="mb-2">Programming: <span class="font-bold">Andries</span></p>
+        <p class="mb-2">Art Assets: <span class="font-bold">Andries</span></p>
+        <p class="mb-2">Music: <span class="font-bold">Andries</span></p>
+
+        <p class="mt-4 opacity-70 text-sm">Built with passion and chaos.</p>
+
+        <button class="action-button btn-secondary w-full mt-6"
+            onclick="closeCreditsModal()">
+            Close
+        </button>
+    </div>
+</div>
 
     <!-- Options Modal -->
     <div id="options-modal-overlay" class="modal-overlay">
@@ -574,6 +644,25 @@ function updateEnemySpawnRate(val) {
 
         function promptExploration(){ const uniqueItemCount = countUniqueItems(); log("The path continues deeper into the gloom. What do you do?"); updateButtons([{ text: `<img src="images/Continue.png" alt="Continue" width="40" height="40" class="stat"> Continue Descent`, cssClass:'btn-primary', handler: ()=> explore() },{ text: `<img src="images/Inventory.png" alt="Inventory" width="40" height="40" class="stat"> Inventory (${uniqueItemCount})`, cssClass:'btn-heal', handler: ()=> openInventoryModal() },{ text: `<img src="images/Shop.png" alt="Shop" width="40" height="40" class="stat"> Visit Shop`, cssClass:'btn-gold', handler: ()=> enterShop() }]); }
 
+        // HELP MODAL CONTROL
+function openHelpModal() {
+    openModal(document.getElementById('help-modal-overlay'));
+}
+
+function closeHelpModal() {
+    closeModal(document.getElementById('help-modal-overlay'));
+}
+
+// CREDITS MODAL CONTROL
+function openCreditsModal() {
+    openModal(document.getElementById('credits-modal-overlay'));
+}
+
+function closeCreditsModal() {
+    closeModal(document.getElementById('credits-modal-overlay'));
+}
+
+        
         function toggleMenuMusic() {
     const audio = document.getElementById('menu-music');
     const btn = document.getElementById('music-toggle');
