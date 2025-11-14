@@ -304,6 +304,48 @@
         .btn-secondary { background-color: var(--secondary-color); color: white; border: 2px solid #38322e; }
         .btn-heal { background-color: var(--heal-color); color: white; border: 2px solid #1e6037; }
         .btn-gold { background-color: var(--gold-color); color: var(--bg-color); border: 2px solid #a18e47; }
+
+        .news-bubble {
+    background: #1f2937; /* dark gray */
+    padding: 12px 16px;
+    border-radius: 16px;
+    position: relative;
+    color: #f9fafb;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    cursor: pointer;
+}
+
+.news-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-top-color: #1f2937;
+    border-bottom: 0;
+    margin-bottom: -10px;
+}
+
+.news-header {
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 1.1rem;
+}
+
+.news-date {
+    font-size: 0.8rem;
+    color: #9ca3af; /* light gray */
+    text-align: right;
+    margin-top: 4px;
+}
+
+.news-content {
+    display: none; /* hidden by default */
+    margin-top: 6px;
+    white-space: pre-wrap; /* allows \n to render as new lines */
+}
         
     </style>
 </head>
@@ -335,6 +377,11 @@
         <button class="action-button btn-secondary w-full mb-6"
             onclick="openCreditsModal()">
             <img src="images/Credits.png" width="40" height="40" class="stat"> Credits
+        </button>
+
+        <button class="action-button btn-secondary w-full mb-4"
+            onclick="openNewsModal()">
+            <img src="images/News.png" width="40" height="40" class="stat"> News
         </button>
 
         <button id="music-toggle" class="action-button btn-gold w-full mb-3"
@@ -390,6 +437,18 @@
             <button class="action-button btn-secondary w-full" onclick="closeShopModal()">Leave Shop</button>
         </div>
     </div>
+
+    <!-- NEWS MODAL -->
+<div id="news-modal" class="modal-overlay" style="display:none; justify-content:center;">
+    <div class="modal-content !w-[500px] !p-6 text-left relative">
+        <h2 class="text-3xl font-bold mb-4 text-amber-400 text-center">News</h2>
+        <div id="news-container" class="flex flex-col gap-4 max-h-[400px] overflow-y-auto">
+            <!-- News items will be injected here dynamically -->
+        </div>
+        <button class="action-button btn-secondary mt-4 w-full"
+            onclick="closeNewsModal()">Close</button>
+    </div>
+</div>
 
     <!-- Help Modal -->
     <div id="help-modal-overlay" class="modal-overlay">
@@ -572,6 +631,40 @@ function updateEnemySpawnRate(val) {
         const stats = {
             hp: document.getElementById('player-hp'), maxHp: document.getElementById('player-max-hp'), gold: document.getElementById('player-gold'), attack: document.getElementById('player-attack'), weaponLevel: document.getElementById('player-weapon-level'), buffStatus: document.getElementById('player-buff-status'), level: document.getElementById('player-level'), exp: document.getElementById('player-exp'), expNext: document.getElementById('player-exp-next')
         };
+
+        // news code
+        async function loadNews() {
+    const container = document.getElementById('news-container');
+    container.innerHTML = ''; // clear previous news
+
+    try {
+        const response = await fetch('news/news.json');
+        const newsList = await response.json();
+
+        newsList.forEach((news, index) => {
+            const bubble = document.createElement('div');
+            bubble.className = 'news-bubble';
+
+            bubble.innerHTML = `
+                <div class="news-header">${news.header}</div>
+                <div class="news-date">${news.date}</div>
+                <div class="news-content" id="news-content-${index}">${news.content}</div>
+            `;
+
+            // toggle content on click
+            bubble.addEventListener('click', () => {
+                const contentDiv = document.getElementById(`news-content-${index}`);
+                const isVisible = contentDiv.style.display === 'block';
+                contentDiv.style.display = isVisible ? 'none' : 'block';
+            });
+
+            container.appendChild(bubble);
+        });
+    } catch (err) {
+        console.error('Failed to load news:', err);
+        container.innerHTML = '<p style="color:red;">Failed to load news.</p>';
+    }
+}
 
         function isMobileDevice(){ return window.innerWidth < 768; }
         function log(message, className=''){ const entry = document.createElement('div'); entry.className = 'log-entry ' + className; entry.innerHTML = message; logElement.appendChild(entry); logElement.scrollTop = logElement.scrollHeight; }
