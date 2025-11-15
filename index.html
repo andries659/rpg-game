@@ -989,7 +989,7 @@ function updateNewsScrollShadows() {
     if (audio.paused) {
         // PLAY
         audio.volume = settings.volume / 100;
-        audio.play().catch(() => {});
+        audio.play().catch(() => {}); // silently fail if autoplay is blocked
         if (btn) {
             btn.innerHTML = 
                 '<img src="images/MusicMute.png" width="40" height="40" class="stat"> Mute Music';
@@ -1004,39 +1004,45 @@ function updateNewsScrollShadows() {
     }
 }
 
-
-// Browser gesture unlock (autoplay fix)
+// Browser gesture unlock (autoplay fix for iOS & Android)
 function initMenuAudioOnGesture() {
     const audio = document.getElementById('menu-music');
     if (!audio) return;
 
     audio.volume = settings.volume / 100;
 
-    const tryPlay = () => {
+    const unlockAudio = () => {
         audio.play()
             .then(() => {
-                const btn = document.getElementById('music-toggle');
-                if (btn) {
-                    if (audio.paused) {
-                        btn.innerHTML =
-                            '<img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music';
-                    } else {
-                        btn.innerHTML =
-                            '<img src="images/MusicMute.png" width="40" height="40" class="stat"> Mute Music';
-                    }
-                }
+                updateMusicButton(audio);
             })
             .catch(() => {});
 
-        document.removeEventListener('click', tryPlay);
+        // Some mobile browsers need multiple gestures
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
     };
 
-    document.addEventListener('click', tryPlay);
+    // Listen for both click and touchstart gestures
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio, { passive: true });
+}
+
+function updateMusicButton(audio) {
+    const btn = document.getElementById('music-toggle');
+    if (!btn) return;
+
+    if (audio.paused) {
+        btn.innerHTML = 
+            '<img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music';
+    } else {
+        btn.innerHTML = 
+            '<img src="images/MusicMute.png" width="40" height="40" class="stat"> Mute Music';
+    }
 }
 
 // INIT
 window.addEventListener('DOMContentLoaded', () => {
-
     // show menu, hide game UI
     document.getElementById('main-menu').style.display = 'flex';
     document.getElementById('game-root').style.display = 'none';
@@ -1046,11 +1052,11 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('opt-text-speed-val').textContent = settings.textSpeed;
     document.getElementById('opt-spawn-val').textContent = Math.round(settings.spawnChance * 100) + "%";
 
-    // audio volume before user gesture
+    // set volume
     const audio = document.getElementById('menu-music');
     if (audio) audio.volume = settings.volume / 100;
 
-    // unlock audio when user clicks anywhere
+    // unlock audio when user interacts
     initMenuAudioOnGesture();
 });
 
