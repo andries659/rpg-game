@@ -794,7 +794,7 @@ function formatContentToHtml(text) {
 
 async function loadNewsFromJson() {
     try {
-        const resp = await fetch('/news/news.json', { cache: "no-cache" });
+        const resp = await fetch('news/news.json', { cache: "no-cache" });
         if (!resp.ok) throw new Error('Fetch failed');
         const data = await resp.json();
         return data;
@@ -802,7 +802,7 @@ async function loadNewsFromJson() {
         // Fallback: small inline list if fetch fails
         console.warn('Failed to load /news/news.json — using fallback.', err);
         return [
-            { "id": "fallback-1", "header": "No remote news", "date": new Date().toISOString().slice(0,10), "content": "Could not load news/news.json. Check path or GitHub Pages CORS settings." }
+            { "id": "fallback-1", "header": "No remote news", "date": new Date().toISOString().slice(0,10), "content": "Could not load the news.json file for the latest news. Check path or GitHub Pages CORS settings." }
         ];
     }
 }
