@@ -305,47 +305,59 @@
         .btn-heal { background-color: var(--heal-color); color: white; border: 2px solid #1e6037; }
         .btn-gold { background-color: var(--gold-color); color: var(--bg-color); border: 2px solid #a18e47; }
 
-        .news-bubble {
-    background: #1f2937; /* dark gray */
-    padding: 12px 16px;
-    border-radius: 16px;
-    position: relative;
-    color: #f9fafb;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    cursor: pointer;
+        /* --- News UI additions --- */
+.news-bubble {
+  background: linear-gradient(180deg, #2f2c2a, #272420);
+  border: 1px solid rgba(255,255,255,0.04);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.news-bubble:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+
+.news-bubble .news-title-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.news-bubble .news-excerpt { color: #d1cfc6; font-size: 0.95rem; opacity: 0.95; max-height: 3.6rem; overflow: hidden; }
+
+/* NEW badge */
+.news-badge {
+  background: #ef4444;
+  color: white;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  margin-left: 8px;
 }
 
-.news-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 20px;
-    width: 0;
-    height: 0;
-    border: 10px solid transparent;
-    border-top-color: #1f2937;
-    border-bottom: 0;
-    margin-bottom: -10px;
+/* Pagination */
+.news-page-btn { background:#3b3a39; padding:6px 10px; border-radius:6px; color:#f3f2f0; cursor:pointer; border:1px solid rgba(255,255,255,0.04); }
+
+/* full content link styling */
+.full-news-content a { text-decoration: underline; color: #60a5fa; }
+
+/* slide down fade (used briefly when opening full modal) */
+.news-slide-in {
+  transform-origin: top center;
+  transform: translateY(-8px) scale(.995);
+  opacity: 0;
+  transition: transform .18s ease, opacity .18s ease;
+}
+.modal-overlay.active .news-slide-in {
+  transform: translateY(0) scale(1);
+  opacity: 1;
 }
 
-.news-header {
-    font-weight: bold;
-    margin-bottom: 4px;
-    font-size: 1.1rem;
+/* scroll shadows */
+#news-scroll-top-shadow, #news-scroll-bottom-shadow {
+  background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0));
+  pointer-events: none;
 }
-
-.news-date {
-    font-size: 0.8rem;
-    color: #9ca3af; /* light gray */
-    text-align: right;
-    margin-top: 4px;
-}
-
-.news-content {
-    display: none; /* hidden by default */
-    margin-top: 6px;
-    white-space: pre-wrap; /* allows \n to render as new lines */
-}
+#news-scroll-bottom-shadow { background: linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0)); }
+#news-scroll-top-shadow.opacity-1, #news-scroll-bottom-shadow.opacity-1 { opacity: 1; }
         
     </style>
 </head>
@@ -438,13 +450,51 @@
         </div>
     </div>
 
-    <!-- NEWS MODAL -->
-<div id="news-modal" class="modal-overlay">
-    <div class="modal-content !w-[500px] !p-6 text-left bg-gray-800 rounded-lg relative">
-        <h2 class="text-3xl font-bold mb-4 text-amber-400 text-center"><img src="images/News.png" alt="Shop" width="40" height="40" class="stat"> News</h2>
-        <div id="news-container" class="flex flex-col gap-4 max-h-[400px] overflow-y-auto"></div>
-        <button class="action-button btn-secondary mt-4 w-full" onclick="closeNewsModal()">Close</button>
+    <!-- NEWS LIST MODAL -->
+<div id="news-modal" class="modal-overlay hidden">
+  <div class="modal-content !w-[600px] !p-6 text-left bg-gray-800 rounded-lg relative">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-3xl font-bold text-amber-400 flex items-center gap-3">
+        <img src="images/News.png" alt="News" width="36" height="36" class="stat"> News
+      </h2>
+      <div class="flex items-center gap-2">
+        <span id="news-unread-count" class="text-sm text-gray-300"></span>
+        <button class="action-button btn-secondary ml-2" onclick="closeNewsModal()">Close</button>
+      </div>
     </div>
+
+    <div id="news-list-wrapper" class="relative">
+      <div id="news-list" class="flex flex-col gap-3 max-h-72 overflow-y-auto p-1">
+        <!-- Bubbles injected here -->
+      </div>
+
+      <!-- Scroll shadow (top / bottom) -->
+      <div id="news-scroll-top-shadow" class="pointer-events-none absolute left-0 right-0 top-0 h-6 opacity-0 transition-opacity"></div>
+      <div id="news-scroll-bottom-shadow" class="pointer-events-none absolute left-0 right-0 bottom-0 h-6 opacity-0 transition-opacity"></div>
+    </div>
+
+    <div class="flex items-center justify-between mt-4">
+      <div id="news-pagination" class="flex items-center gap-2"></div>
+      <div class="text-xs text-gray-400">Page <span id="news-current-page">1</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FULL NEWS VIEW MODAL -->
+<div id="full-news-modal" class="modal-overlay hidden">
+  <div class="modal-content !w-[640px] !p-6 text-left bg-gray-800 rounded-lg relative">
+    <div class="mb-2">
+      <h2 id="full-news-header" class="text-3xl font-bold mb-1 text-amber-400"></h2>
+      <p id="full-news-date" class="text-gray-400 text-sm mb-4"></p>
+    </div>
+
+    <div id="full-news-content" class="whitespace-pre-wrap text-gray-200 mb-6 max-h-[56vh] overflow-y-auto"></div>
+
+    <div class="flex gap-2 mt-3">
+      <button class="action-button btn-secondary w-full" onclick="closeFullNewsModal()">Back</button>
+      <button id="mark-read-btn" class="action-button btn-heal w-full" onclick="toggleReadCurrent()">Mark as read</button>
+    </div>
+  </div>
 </div>
 
     <!-- Help Modal -->
@@ -718,59 +768,218 @@ function closeCreditsModal() {
     closeModal(document.getElementById('credits-modal-overlay'));
 }
 
-function openNewsModal() {
-    const modal = document.getElementById('news-modal');
+/* --- Upgraded News System --- */
 
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
+const NEWS_PAGE_SIZE = 4;
+let NEWS_DATA = [];
+let NEWS_CURRENT_PAGE = 1;
+let NEWS_READ_SET = new Set(JSON.parse(localStorage.getItem('news_read_set') || '[]'));
 
-    // fade-in animation
-    requestAnimationFrame(() => {
-        modal.classList.add('active');
+/**
+ * Helper: format plain text content to clickable links (simple)
+ * Note: we set innerHTML only for formatted content. If you expect untrusted input,
+ * sanitize it first. These are static news files in your repo so acceptable here.
+ */
+function formatContentToHtml(text) {
+    // Convert URLs to anchors
+    const urlRegex = /(\bhttps?:\/\/[^\s]+)/g;
+    const escaped = text
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
+    const linked = escaped.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+    // keep line breaks
+    return linked.replace(/\n/g, '<br>');
+}
+
+async function loadNewsFromJson() {
+    try {
+        const resp = await fetch('/news/news.json', { cache: "no-cache" });
+        if (!resp.ok) throw new Error('Fetch failed');
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        // Fallback: small inline list if fetch fails
+        console.warn('Failed to load /news/news.json — using fallback.', err);
+        return [
+            { "id": "fallback-1", "header": "No remote news", "date": new Date().toISOString().slice(0,10), "content": "Could not load news/news.json. Check path or GitHub Pages CORS settings." }
+        ];
+    }
+}
+
+function saveReadSet() {
+    localStorage.setItem('news_read_set', JSON.stringify(Array.from(NEWS_READ_SET)));
+}
+
+function getUnreadCount() {
+    return NEWS_DATA.filter(n => !NEWS_READ_SET.has(n.id)).length;
+}
+
+function renderNewsList(page = 1) {
+    NEWS_CURRENT_PAGE = page;
+    const listEl = document.getElementById('news-list');
+    listEl.innerHTML = '';
+
+    const offset = (page - 1) * NEWS_PAGE_SIZE;
+    const pageItems = NEWS_DATA.slice(offset, offset + NEWS_PAGE_SIZE);
+
+    pageItems.forEach((news, idx) => {
+        const bubble = document.createElement('div');
+        bubble.className = 'news-bubble news-slide-in';
+        // excerpt: first 120 chars
+        const rawExcerpt = news.content.replace(/\n/g,' ').trim();
+        const excerpt = rawExcerpt.length > 140 ? rawExcerpt.slice(0,140) + '…' : rawExcerpt;
+
+        // header row includes title, date, badge
+        const badgeHtml = NEWS_READ_SET.has(news.id) ? '' : `<span class="news-badge">NEW</span>`;
+        bubble.innerHTML = `
+            <div class="news-title-row">
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <div style="font-weight:700">${news.header}</div>
+                    ${badgeHtml}
+                </div>
+                <div style="font-size:0.85rem;color:#9ca3af">${news.date}</div>
+            </div>
+            <div class="news-excerpt">${excerpt}</div>
+        `;
+
+        bubble.addEventListener('click', () => {
+            openFullNewsModal(news);
+        });
+
+        listEl.appendChild(bubble);
     });
 
+    // empty state
+    if (pageItems.length === 0) {
+        listEl.innerHTML = '<div class="text-gray-400 italic p-4">No news available.</div>';
+    }
+
+    renderPagination();
+    document.getElementById('news-current-page').textContent = NEWS_CURRENT_PAGE;
+    document.getElementById('news-unread-count').textContent = `${getUnreadCount()} unread`;
+    updateNewsScrollShadows();
+}
+
+function renderPagination() {
+    const container = document.getElementById('news-pagination');
+    container.innerHTML = '';
+    const totalPages = Math.max(1, Math.ceil(NEWS_DATA.length / NEWS_PAGE_SIZE));
+
+    const prev = document.createElement('button');
+    prev.className = 'news-page-btn';
+    prev.textContent = 'Prev';
+    prev.disabled = (NEWS_CURRENT_PAGE <= 1);
+    prev.onclick = () => renderNewsList(Math.max(1, NEWS_CURRENT_PAGE - 1));
+    container.appendChild(prev);
+
+    // optionally show page numbers if small
+    for (let i = 1; i <= totalPages; i++) {
+        const pbtn = document.createElement('button');
+        pbtn.className = 'news-page-btn';
+        pbtn.textContent = String(i);
+        if (i === NEWS_CURRENT_PAGE) pbtn.style.opacity = '0.6';
+        pbtn.onclick = () => renderNewsList(i);
+        container.appendChild(pbtn);
+    }
+
+    const next = document.createElement('button');
+    next.className = 'news-page-btn';
+    next.textContent = 'Next';
+    next.disabled = (NEWS_CURRENT_PAGE >= totalPages);
+    next.onclick = () => renderNewsList(Math.min(totalPages, NEWS_CURRENT_PAGE + 1));
+    container.appendChild(next);
+}
+
+async function loadNews() {
+    // load and render
+    NEWS_DATA = await loadNewsFromJson();
+    // ensure unique ids exist
+    NEWS_DATA = NEWS_DATA.map((n, i) => ({ id: n.id || `news-${i}`, ...n }));
+    renderNewsList(1);
+}
+
+/* Open/Close (use your modal helpers for animation) */
+function openNewsModal() {
+    const modal = document.getElementById('news-modal');
+    openModal(modal); // reuse your openModal animation
+    // (re)load to get latest
     loadNews();
 }
 
 function closeNewsModal() {
     const modal = document.getElementById('news-modal');
-
-    // fade-out
-    modal.classList.remove('active');
-
-    setTimeout(() => {
-        modal.style.display = 'none';
-        modal.classList.add('hidden');
-    }, 300);
+    closeModal(modal);
 }
 
-async function loadNews() {
-    const container = document.getElementById('news-container');
-    container.innerHTML = '';
+/* Full view */
+let CURRENT_OPEN_NEWS = null;
 
-    const newsList = [
-        { "header": "Update 1.1 Released", "content": "New dungeons and weapons!\nCheck them out!", "date": "2025-11-14" },
-        { "header": "Server Maintenance", "content": "Servers down 2-4AM UTC.\nPlan accordingly.", "date": "2025-11-13" }
-    ];
+function openFullNewsModal(news) {
+    CURRENT_OPEN_NEWS = news;
+    const hdr = document.getElementById('full-news-header');
+    const date = document.getElementById('full-news-date');
+    const content = document.getElementById('full-news-content');
+    hdr.textContent = news.header;
+    date.textContent = news.date;
+    content.innerHTML = formatContentToHtml(news.content);
 
-    newsList.forEach((news, index) => {
-        const bubble = document.createElement('div');
-        bubble.className = 'news-bubble bg-gray-700 p-3 rounded-lg cursor-pointer';
+    // mark as read when opening
+    if (!NEWS_READ_SET.has(news.id)) {
+        NEWS_READ_SET.add(news.id);
+        saveReadSet();
+        // re-render list so badge disappears
+        renderNewsList(NEWS_CURRENT_PAGE);
+    }
 
-        bubble.innerHTML = `
-            <div class="news-header font-bold">${news.header}</div>
-            <div class="news-date text-gray-400 text-sm text-right">${news.date}</div>
-            <div class="news-content mt-2 whitespace-pre-wrap hidden" id="news-content-${index}">${news.content}</div>
-        `;
+    // update mark button
+    document.getElementById('mark-read-btn').textContent = 'Mark as unread';
+    if (NEWS_READ_SET.has(news.id)) {
+        document.getElementById('mark-read-btn').textContent = 'Mark as unread';
+    } else {
+        document.getElementById('mark-read-btn').textContent = 'Mark as read';
+    }
 
-        bubble.addEventListener('click', () => {
-            const contentDiv = document.getElementById(`news-content-${index}`);
-            contentDiv.classList.toggle('hidden');
-        });
-
-        container.appendChild(bubble);
-    });
+    openModal(document.getElementById('full-news-modal'));
 }
+
+function closeFullNewsModal() {
+    closeModal(document.getElementById('full-news-modal'));
+    CURRENT_OPEN_NEWS = null;
+}
+
+function toggleReadCurrent() {
+    if (!CURRENT_OPEN_NEWS) return;
+    if (NEWS_READ_SET.has(CURRENT_OPEN_NEWS.id)) {
+        NEWS_READ_SET.delete(CURRENT_OPEN_NEWS.id);
+    } else {
+        NEWS_READ_SET.add(CURRENT_OPEN_NEWS.id);
+    }
+    saveReadSet();
+    // update UI
+    renderNewsList(NEWS_CURRENT_PAGE);
+    document.getElementById('mark-read-btn').textContent = NEWS_READ_SET.has(CURRENT_OPEN_NEWS.id) ? 'Mark as unread' : 'Mark as read';
+}
+
+/* Scroll shadow helpers */
+function updateNewsScrollShadows() {
+    const list = document.getElementById('news-list');
+    const topShadow = document.getElementById('news-scroll-top-shadow');
+    const bottomShadow = document.getElementById('news-scroll-bottom-shadow');
+    if (!list) return;
+
+    // run once to set on load
+    const check = () => {
+        topShadow.classList.toggle('opacity-1', list.scrollTop > 10);
+        const bottomVisible = list.scrollHeight - list.scrollTop - list.clientHeight > 10;
+        bottomShadow.classList.toggle('opacity-1', bottomVisible);
+    };
+
+    list.addEventListener('scroll', check);
+    check();
+}
+
+/* initial hook: make sure news loads if user opens modal */
         
         function toggleMenuMusic() {
     const audio = document.getElementById('menu-music');
