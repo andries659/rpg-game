@@ -719,14 +719,29 @@ function closeCreditsModal() {
 }
 
 function openNewsModal() {
-    document.getElementById('news-modal').classList.remove('hidden');
-    document.getElementById('news-modal').style.display = 'flex';
+    const modal = document.getElementById('news-modal');
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+
+    // fade-in animation
+    requestAnimationFrame(() => {
+        modal.classList.add('active');
+    });
+
     loadNews();
 }
 
 function closeNewsModal() {
-    document.getElementById('news-modal').classList.add('hidden');
-    document.getElementById('news-modal').style.display = 'none';
+    const modal = document.getElementById('news-modal');
+
+    // fade-out
+    modal.classList.remove('active');
+
+    setTimeout(() => {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+    }, 300);
 }
 
 async function loadNews() {
