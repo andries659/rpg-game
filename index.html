@@ -814,14 +814,19 @@ function initMenuAudioOnGesture() {
 // INIT
 window.addEventListener('DOMContentLoaded', () => {
 
-    // show menu, hide game UI
-    document.getElementById('main-menu').style.display = 'flex';
-    document.getElementById('game-root').style.display = 'none';
+    // Correct elements
+    const mainMenu = document.getElementById('main-menu-overlay');
+    const gameContainer = document.querySelector('.game-container');
+
+    // Ensure they exist before touching them
+    if (mainMenu) mainMenu.style.display = 'flex';
+    if (gameContainer) gameContainer.style.display = 'block';
 
     // slider numeric labels
     document.getElementById('opt-volume-val').textContent = settings.volume;
     document.getElementById('opt-text-speed-val').textContent = settings.textSpeed;
-    document.getElementById('opt-spawn-val').textContent = Math.round(settings.spawnChance * 100) + "%";
+    document.getElementById('opt-spawn-val').textContent =
+        Math.round(settings.spawnChance * 100) + "%";
 
     // audio volume before user gesture
     const audio = document.getElementById('menu-music');
