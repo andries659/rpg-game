@@ -1,17 +1,26 @@
 [
-    {
-        "header": "Update 1.1 Released",
-        "content": "New dungeons and weapons have been added to the game!\nCheck them out in the main menu!",
-        "date": "2025-11-14"
-    },
-    {
-        "header": "Server Maintenance",
-        "content": "Servers will be down for maintenance from 2 AM to 4 AM UTC.\nPlease plan accordingly.",
-        "date": "2025-11-13"
-    },
-    {
-        "header": "Special Event",
-        "content": "A special Halloween event is live!\nCollect limited items and earn rewards.",
-        "date": "2025-10-31"
-    }
+  {
+    "id": 1001,
+    "header": "Update 1.1 Released",
+    "date": "2025-11-14",
+    "content": "New dungeons and weapons!\nCheck them out!\n\nPatch notes:\n- New: The Obsidian Vault\n- New Weapon: Glaive of Ash\n- Bugfixes & balance.\n\nMore details: https://andries659.github.io/rpg-game/patch-notes/1.1"
+  },
+  {
+    "id": 1002,
+    "header": "Server Maintenance",
+    "date": "2025-11-13",
+    "content": "Servers down 02:00-04:00 UTC for maintenance.\nPlan accordingly.\n\nStatus page:\nhttps://status.example.com"
+  },
+  {
+    "id": 1003,
+    "header": "Autumn Raid Event",
+    "date": "2025-10-01",
+    "content": "A limited time raid has begun! Rewards include gems and unique drops.\nRead the full event rules:\nhttps://andries659.github.io/rpg-game/events/autumn-raid"
+  },
+  {
+    "id": 1004,
+    "header": "Developer Log: Level Design",
+    "date": "2025-09-05",
+    "content": "We talk level design and how you can contribute via GitHub Issues.\nContribute here:\nhttps://github.com/andries659/rpg-game/issues"
+  }
 ]
