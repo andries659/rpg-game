@@ -305,24 +305,6 @@
         .btn-heal { background-color: var(--heal-color); color: white; border: 2px solid #1e6037; }
         .btn-gold { background-color: var(--gold-color); color: var(--bg-color); border: 2px solid #a18e47; }
 
-        /* Red unread dot on the News button */
-#news-btn-wrapper {
-    position: relative;
-    display: inline-block;
-}
-
-#news-unread-dot {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    width: 12px;
-    height: 12px;
-    background: #ef4444;
-    border-radius: 50%;
-    border: 2px solid #2f2c2a; /* matches your dark theme */
-    display: none;
-}
-
         /* --- News UI additions --- */
 .news-bubble {
   background: linear-gradient(180deg, #2f2c2a, #272420);
@@ -409,14 +391,10 @@
             <img src="images/Credits.png" width="40" height="40" class="stat"> Credits
         </button>
 
-        <div id="news-btn-wrapper">
-    <span id="news-unread-dot"></span>
-
-    <button class="action-button btn-secondary w-full mb-4"
+        <button class="action-button btn-secondary w-full mb-4"
             onclick="openNewsModal()">
-        <img src="images/News.png" width="40" class="stat"> News
-    </button>
-        </div>
+            <img src="images/News.png" width="40" height="40" class="stat"> News
+        </button>
 
         <button id="music-toggle" class="action-button btn-gold w-full mb-3"
             onclick="toggleMenuMusic()">
@@ -519,31 +497,31 @@
   </div>
 </div>
 
-    <!-- Help Modal -->
-    <div id="help-modal-overlay" class="modal-overlay">
-    <div class="modal-content !w-[500px] !p-6">
-        <h2 class="text-2xl font-bold mb-4 text-blue-300">📘 How to Play</h2>
+    <!-- How To / Help Modal (multi-page) -->
+<div id="help-modal-overlay" class="modal-overlay">
+  <div class="modal-content !w-[500px] !p-6">
+    <h2 class="text-2xl font-bold mb-4 text-blue-300 flex items-center gap-2">
+      <img src="images/Help.png" width="36" alt="Help" class="stat"> How to Play
+    </h2>
 
-        <p class="mb-3">
-            Welcome to <span class="text-amber-300 font-bold">The Iron Tomb</span>! 
-            Your goal is to explore the deadly dungeon, defeat enemies, collect items,
-            and survive as long as possible.
-        </p>
+    <!-- PAGE CONTENT AREA -->
+    <div id="howto-page-content" class="min-h-[220px] text-gray-200"></div>
 
-        <ul class="list-disc pl-6 space-y-2 text-left">
-            <li>⚔️ <strong>Attack</strong> enemies to defeat them and gain XP.</li>
-            <li>🛡️ <strong>Use items</strong> such as potions to heal or boost stats.</li>
-            <li>🎒 <strong>Manage your inventory</strong> to stay prepared.</li>
-            <li>💰 <strong>Collect loot</strong> to increase your wealth.</li>
-            <li>📈 <strong>Level up</strong> to increase attack power and max HP.</li>
-            <li>🚪 <strong>Explore rooms</strong> for danger, treasure, or relief.</li>
-        </ul>
-
-        <button class="action-button btn-secondary w-full mt-6"
-            onclick="closeHelpModal()">
-            Close
-        </button>
+    <!-- PAGE CONTROLS -->
+    <div class="flex justify-between mt-6 gap-3">
+      <button id="howto-back-btn" class="action-button btn-secondary w-1/2"
+              onclick="howtoPrevPage()">Back</button>
+      <button id="howto-next-btn" class="action-button btn-primary w-1/2"
+              onclick="howtoNextPage()">Next</button>
     </div>
+
+    <div class="text-center text-xs text-gray-400 mt-2">
+      Page <span id="howto-page-num">1</span> / <span id="howto-total-pages">1</span>
+    </div>
+
+    <button class="action-button btn-secondary w-full mt-4"
+            onclick="closeHelpModal()">Close</button>
+  </div>
 </div>
 
     <!-- Credits Modal -->
@@ -779,13 +757,77 @@ function updateEnemySpawnRate(val) {
         }
 
         // HELP MODAL CONTROL
+/* HOW-TO (Help) multi-page content */
+let HOWTO_PAGE = 1;
+const HOWTO_PAGES = [
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Basics</h3>
+<p>Your goal is to descend the Iron Tomb, defeat monsters, collect loot, and survive as long as possible.</p>
+<img src="images/Start.png" class="mx-auto my-4" width="120">
+<ul class="list-disc pl-6 space-y-1">
+  <li>Attack enemies</li>
+  <li>Use potions and buffs</li>
+  <li>Collect items</li>
+  <li>Upgrade your equipment</li>
+</ul>`,
+
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Combat</h3>
+<img src="images/Attack.png" class="mx-auto my-4" width="120">
+<p>Combat is turn-based. Each attack deals damage based on your Attack stat.</p>
+<ul class="list-disc pl-6 space-y-1">
+  <li>Potions heal instantly</li>
+  <li>Buffs give temporary attack power</li>
+  <li>Flee to escape tough enemies</li>
+</ul>`,
+
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Inventory & Items</h3>
+<img src="images/Inventory.png" class="mx-auto my-4" width="120">
+<p>The inventory holds potions, buffs, loot, and upgrade resources. Sell junk at shops for gold.</p>`,
+
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Shops & Upgrades</h3>
+<img src="images/Upgrade.png" class="mx-auto my-4" width="120">
+<p>Upgrade your weapon to permanently increase attack power. Shops sell potions, buffs, and upgrades.</p>`,
+
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Good Luck!</h3>
+<p>You now know everything you need to survive the Iron Tomb.</p>
+<img src="images/Buff.png" class="mx-auto my-4" width="120">
+<p class="text-center italic">Stay sharp. The dungeon is always watching...</p>`
+];
+
+function renderHowToPage() {
+    const area = document.getElementById("howto-page-content");
+    const num = document.getElementById("howto-page-num");
+    const total = document.getElementById("howto-total-pages");
+    if (!area) return;
+    area.innerHTML = HOWTO_PAGES[HOWTO_PAGE - 1] || "<p>Page not found.</p>";
+    num.textContent = HOWTO_PAGE;
+    total.textContent = HOWTO_PAGES.length;
+    // enable/disable buttons
+    document.getElementById('howto-back-btn').disabled = (HOWTO_PAGE <= 1);
+    document.getElementById('howto-next-btn').disabled = (HOWTO_PAGE >= HOWTO_PAGES.length);
+}
+
 function openHelpModal() {
+    HOWTO_PAGE = 1;
+    renderHowToPage();
     openModal(document.getElementById('help-modal-overlay'));
 }
 
 function closeHelpModal() {
     closeModal(document.getElementById('help-modal-overlay'));
 }
+
+function howtoNextPage() {
+    if (HOWTO_PAGE < HOWTO_PAGES.length) {
+        HOWTO_PAGE++;
+        renderHowToPage();
+    }
+}
+function howtoPrevPage() {
+    if (HOWTO_PAGE > 1) {
+        HOWTO_PAGE--;
+        renderHowToPage();
+    }
+                                }
 
 // CREDITS MODAL CONTROL
 function openCreditsModal() {
