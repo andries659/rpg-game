@@ -305,6 +305,24 @@
         .btn-heal { background-color: var(--heal-color); color: white; border: 2px solid #1e6037; }
         .btn-gold { background-color: var(--gold-color); color: var(--bg-color); border: 2px solid #a18e47; }
 
+        /* Red unread dot on the News button */
+#news-btn-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+#news-unread-dot {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 12px;
+    height: 12px;
+    background: #ef4444;
+    border-radius: 50%;
+    border: 2px solid #2f2c2a; /* matches your dark theme */
+    display: none;
+}
+
         /* --- News UI additions --- */
 .news-bubble {
   background: linear-gradient(180deg, #2f2c2a, #272420);
@@ -391,10 +409,14 @@
             <img src="images/Credits.png" width="40" height="40" class="stat"> Credits
         </button>
 
-        <button class="action-button btn-secondary w-full mb-4"
+        <div id="news-btn-wrapper">
+    <span id="news-unread-dot"></span>
+
+    <button class="action-button btn-secondary w-full mb-4"
             onclick="openNewsModal()">
-            <img src="images/News.png" width="40" height="40" class="stat"> News
-        </button>
+        <img src="images/News.png" width="40" class="stat"> News
+    </button>
+        </div>
 
         <button id="music-toggle" class="action-button btn-gold w-full mb-3"
             onclick="toggleMenuMusic()">
@@ -750,6 +772,12 @@ function updateEnemySpawnRate(val) {
 
         function promptExploration(){ const uniqueItemCount = countUniqueItems(); log("The path continues deeper into the gloom. What do you do?"); updateButtons([{ text: `<img src="images/Continue.png" alt="Continue" width="40" height="40" class="stat"> Continue Descent`, cssClass:'btn-primary', handler: ()=> explore() },{ text: `<img src="images/Inventory.png" alt="Inventory" width="40" height="40" class="stat"> Inventory (${uniqueItemCount})`, cssClass:'btn-heal', handler: ()=> openInventoryModal() },{ text: `<img src="images/Shop.png" alt="Shop" width="40" height="40" class="stat"> Visit Shop`, cssClass:'btn-gold', handler: ()=> enterShop() }]); }
 
+        function updateNewsButtonDot() {
+    const unread = getUnreadCount();
+    const dot = document.getElementById("news-unread-dot");
+    dot.style.display = unread > 0 ? "block" : "none";
+        }
+
         // HELP MODAL CONTROL
 function openHelpModal() {
     openModal(document.getElementById('help-modal-overlay'));
@@ -904,6 +932,7 @@ async function loadNews() {
     NEWS_DATA.sort((a, b) => Number(b.id) - Number(a.id));
 
     renderNewsList(1);
+    updateNewsButtonDot();
 }
 
 /* Open/Close (use your modal helpers for animation) */
@@ -912,6 +941,7 @@ function openNewsModal() {
     openModal(modal); // reuse your openModal animation
     // (re)load to get latest
     loadNews();
+    updateNewsButtonDot();
 }
 
 function closeNewsModal() {
@@ -966,6 +996,7 @@ function toggleReadCurrent() {
     // update UI
     renderNewsList(NEWS_CURRENT_PAGE);
     document.getElementById('mark-read-btn').textContent = NEWS_READ_SET.has(CURRENT_OPEN_NEWS.id) ? 'Mark as unread' : 'Mark as read';
+    updateNewsButtonDot();
 }
 
 /* Scroll shadow helpers */
