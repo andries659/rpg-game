@@ -892,10 +892,17 @@ function renderPagination() {
 }
 
 async function loadNews() {
-    // load and render
     NEWS_DATA = await loadNewsFromJson();
-    // ensure unique ids exist
-    NEWS_DATA = NEWS_DATA.map((n, i) => ({ id: n.id || `news-${i}`, ...n }));
+
+    // Ensure ID exists and normalize
+    NEWS_DATA = NEWS_DATA.map((n, i) => ({
+        ...n,
+        id: n.id ?? `news-${i}`
+    }));
+
+    // 🚀 SORT BY ID DESCENDING (latest ID first)
+    NEWS_DATA.sort((a, b) => Number(b.id) - Number(a.id));
+
     renderNewsList(1);
 }
 
