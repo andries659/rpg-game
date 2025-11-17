@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="The Iron Tomb">
+    <meta property="og:description" content="An RPG based game, with a dungeon themed gameplay.">
+    <meta property="og:image" content="https://andries659.github.io/rpg-game/images/Attack.png">
+    <meta property="og:url" content="https://andries659.github.io/rpg-game/">
+    <meta property="og:type" content="website">
+    <!-- Standard icon -->
+<link rel="icon" type="image/png" href="images/Attack.png">
+
+<!-- For Safari / older browsers -->
+<link rel="shortcut icon" href="images/Attack.png" type="image/x-icon">
+
+<!-- For Apple devices (iOS home screen) -->
+<link rel="apple-touch-icon" href="images/Attack.png">
+    <title>The Iron Tomb RPG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- CUSTOM DUNGEON THEME STYLES --- */
+        :root {
+            --bg-color: #131110;
+            --container-color: #262320; 
+            --text-color: #e8e0c8; 
+            --primary-color: #a83f32; 
+            --secondary-color: #4b443c; 
+            --heal-color: #2a7e4b; 
+            --strength-color: #7b32a8; 
+            --gold-color: #d1b45b; 
+            --font-family: 'Inter', sans-serif;
+            --super-heal-color: #8a2be2;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+        }
+
+        .stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 480px; 
+            background-color: var(--container-color);
+            border: 4px solid var(--secondary-color);
+            border-radius: 12px;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            position: relative;
+        }
+
+        /* PC/Desktop Layout Overrides */
+        @media (min-width: 768px) {
+            .game-container {
+                max-width: 1024px;
+                padding: 24px;
+            }
+        }
+        
+        /* --- MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .modal-content {
+            background-color: #35322e;
+            border: 3px solid var(--secondary-color);
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 90%;
+            width: 400px;
+            overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+            transform: scale(0.9) translateY(-20px);
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        /* --- INVENTORY GRID STYLES --- */
+        #inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 columns on all sizes for 4x3 grid */
+            gap: 10px;
+            padding: 5px;
+        }
+        
+        @media (min-width: 768px) {
+            #inventory-grid {
+                grid-template-columns: repeat(4, 1fr); /* Enforce 4 columns */
+            }
+        }
+
+        .item-tile {
+            position: relative;
+            background-color: #4b443c;
+            border-radius: 8px;
+            aspect-ratio: 1 / 1; /* Make it square */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #5d564e;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        
+        /* Style for the empty slots/blocks */
+        .item-tile.empty {
+            background-color: #35322e;
+            border: 2px dashed #4b443c;
+            cursor: default;
+        }
+
+        .item-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            border-color: var(--primary-color);
+        }
+        
+        .item-tile.empty:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: #4b443c;
+        }
+
+        .item-icon-large {
+            font-size: 32px;
+            margin-bottom: 4px;
+        }
+
+        .item-count {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .item-name-small {
+            font-size: 10px;
+            color: var(--text-color);
+            text-align: center;
+            width: 100%;
+            padding: 0 2px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        
+        /* --- TOOLTIP (PC ONLY) --- */
+        .tooltip {
+            position: absolute;
+            left: 105%;
+            top: 0;
+            width: 250px;
+            background-color: #262320;
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+            display: none;
+        }
+        
+        /* Use a custom class for active tooltip visibility */
+        .item-tile:hover > .tooltip.desktop-only {
+            display: block;
+        }
+        
+        @media (max-width: 767px) {
+            .tooltip.desktop-only {
+                display: none !important;
+            }
+        }
+        
+        /* --- GENERIC STYLES --- (Retained from previous version) */
+        .stats-panel {
+            background-color: #35322e;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .hp-bar-container {
+            height: 12px;
+            background-color: #222;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #000;
+            margin-top: 4px;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease-in-out;
+        }
+        
+        /* CRITICAL FIX: Explicitly forces scrollbar on both devices */
+        #game-log {
+            min-height: 250px; /* Increased for better scroll area */
+            max-height: 350px; /* Locked mobile/small screen height */
+            background-color: #35322e;
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            overflow-y: scroll; /* CRITICAL: Enables vertical scrolling and forces the bar to show */
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-color);
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6);
+        }
+
+        @media (min-width: 768px) {
+             #game-log {
+                min-height: 600px;
+                max-height: 800px; /* Fixed high pixel height for desktop to guarantee scroll */
+                margin-bottom: 0; 
+             }
+        }
+
+        .log-entry.emphasis { color: #facc15; }
+        .log-entry.damage { color: #f87171; }
+        .log-entry.heal { color: #4ade80; }
+        .log-entry.buff { color: var(--strength-color); }
+        .log-entry.lvlup { color: #38bdf8; font-weight: bold; }
+
+        /* small helpers for JS-generated class names */
+        .gold-color { color: var(--gold-color); }
+        .text-strength { color: var(--strength-color); }
+
+        /* Button Styles */
+        .action-button {
+            transition: all 0.1s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 18px; 
+            padding: 14px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 0 rgba(0, 0, 0, 0.5); 
+            margin: 4px 0;
+            flex-grow: 1;
+            min-width: 100px;
+            width: 100%;
+        }
+
+        @media (min-width: 320px) {
+            .action-button {
+                width: 48%;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .action-button {
+                width: 100%;
+                margin: 8px 0;
+            }
+            #action-buttons {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+
+        .action-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; border: 2px solid #7c352a; }
+        .btn-secondary { background-color: var(--secondary-color); color: white; border: 2px solid #38322e; }
+        .btn-heal { background-color: var(--heal-color); color: white; border: 2px solid #1e6037; }
+        .btn-gold { background-color: var(--gold-color); color: var(--bg-color); border: 2px solid #a18e47; }
+
+        #credits-modal-overlay a {
+    color: #60a5fa !important;
+    text-decoration: underline !important;
+        }
+
+        /* --- News UI additions --- */
+.news-bubble {
+  background: linear-gradient(180deg, #2f2c2a, #272420);
+  border: 1px solid rgba(255,255,255,0.04);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.news-bubble:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+
+.news-bubble .news-title-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.news-bubble .news-excerpt { color: #d1cfc6; font-size: 0.95rem; opacity: 0.95; max-height: 3.6rem; overflow: hidden; }
+
+/* NEW badge */
+.news-badge {
+  background: #ef4444;
+  color: white;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  margin-left: 8px;
+}
+
+/* Pagination */
+.news-page-btn { background:#3b3a39; padding:6px 10px; border-radius:6px; color:#f3f2f0; cursor:pointer; border:1px solid rgba(255,255,255,0.04); }
+
+/* full content link styling */
+#full-news-content a { text-decoration: underline; color: #60a5fa; }
+
+/* slide down fade (used briefly when opening full modal) */
+.news-slide-in {
+  transform-origin: top center;
+  transform: translateY(-8px) scale(.995);
+  opacity: 0;
+  transition: transform .18s ease, opacity .18s ease;
+}
+.modal-overlay.active .news-slide-in {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* scroll shadows */
+#news-scroll-top-shadow, #news-scroll-bottom-shadow {
+  background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0));
+  pointer-events: none;
+}
+#news-scroll-bottom-shadow { background: linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0)); }
+#news-scroll-top-shadow.opacity-1, #news-scroll-bottom-shadow.opacity-1 { opacity: 1; }
+        
+    </style>
+</head>
+<body class="p-2 sm:p-4">
+
+    <!-- MAIN MENU OVERLAY -->
+    <div id="main-menu-overlay" class="modal-overlay active" style="display:flex;">
+    <div class="modal-content !w-[450px] !p-8 text-center">
+        
+        <audio id="menu-music" src="music/MAINMENU.mpeg" loop preload="auto"></audio>
+
+        <h2 class="text-4xl font-bold mb-6 text-amber-400">The Iron Tomb</h2>
+
+        <button class="action-button btn-primary w-full mb-4"
+            onclick="startGame(); closeMainMenu();">
+            <img src="images/Start.png" width="40" height="40" class="stat"> Start Game
+        </button>
+
+        <button class="action-button btn-secondary w-full mb-4"
+            onclick="openOptionsModal()">
+            <img src="images/Settings.png" width="40" height="40" class="stat"> Options
+        </button>
+
+        <button class="action-button btn-secondary w-full mb-4"
+            onclick="openHelpModal()">
+            <img src="images/Help.png" width="40" height="40" class="stat"> How to Play
+        </button>
+
+        <button class="action-button btn-secondary w-full mb-6"
+            onclick="openCreditsModal()">
+            <img src="images/Credits.png" width="40" height="40" class="stat"> Credits
+        </button>
+
+        <button class="action-button btn-secondary w-full mb-4"
+            onclick="openNewsModal()">
+            <img src="images/News.png" width="40" height="40" class="stat"> News
+        </button>
+
+        <button id="music-toggle" class="action-button btn-gold w-full mb-3"
+            onclick="toggleMenuMusic()">
+            <img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music
+        </button>
+
+    </div>
+</div>
+
+    <div class="game-container">
+        <h1 class="text-3xl text-center font-bold mb-4 text-amber-500 tracking-wide">The Iron Tomb</h1>
+
+        <div class="stats-panel" id="stats-panel">
+            <div class="grid grid-cols-2 gap-2 text-sm sm:text-base mb-2">
+                <p class="stat"><img src="images/Level.png" alt="Level" width="20" height="20"> Level: <span id="player-level">1</span></p>
+                <p class="stat"><img src="images/Attack.png" alt="Attack" width="20" height="20"> Attack: <span id="player-attack">3</span></p>
+                <p class="stat"><img src="images/Gold.png" alt="Gold" width="20" height="20"> Gold: <span id="player-gold" class="text-amber-300">0</span></p>
+                <p class="stat"><img src="images/Weapon.png" alt="Weapon" width="20" height="20"> Weapon: <span id="player-weapon-level">1</span></p>
+                <p class="stat col-span-2"><img src="images/Buff.png" alt="Buff" width="20" height="20"> Buff: <span id="player-buff-status" class="text-gray-400 italic">None</span></p>
+           </div>
+            
+            <div class="text-xs text-gray-400 mb-1">HP: <span id="player-hp">10</span> / <span id="player-max-hp">10</span></div>
+            <div class="hp-bar-container"><div id="hp-bar-fill" class="hp-bar-fill" style="width: 100%;"></div></div>
+
+            <div class="text-xs text-gray-400 mt-2">EXP: <span id="player-exp">0</span> / <span id="player-exp-next">10</span></div>
+        </div>
+
+        <div class="md:grid md:grid-cols-5 md:gap-4 flex flex-col">
+            <div class="md:col-span-3 order-1 md:order-2">
+                 <div id="game-log" class="shadow-inner">
+                    <div class="log-entry">Welcome, explorer, to the Iron Tomb. Can you survive the depths?</div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 order-2 md:order-1">
+                <div id="action-buttons-wrapper" class="md:flex-grow">
+                    <div id="action-buttons" class="flex flex-wrap justify-center gap-4">
+                        <button id="start-button" class="action-button btn-primary" onclick="startGame()"><img src="images/Start.png" alt="Start" width="28" height="28" class="stat"> Start Descent</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div id="shop-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold text-center mb-4 gold-color"><img src="images/Shop.png" alt="Shop" width="40" height="40" class="stat"> Shop</h2>
+            <div id="shop-items-container" class="space-y-2"></div>
+            <button class="action-button btn-gold w-full mt-4 mb-2" onclick="sellAllJunk()">Sell All Junk</button>
+            <button class="action-button btn-secondary w-full" onclick="closeShopModal()">Leave Shop</button>
+        </div>
+    </div>
+
+    <!-- NEWS LIST MODAL -->
+<div id="news-modal" class="modal-overlay hidden">
+  <div class="modal-content !w-[600px] !p-6 text-left bg-gray-800 rounded-lg relative">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-3xl font-bold text-amber-400 flex items-center gap-3">
+        <img src="images/News.png" alt="News" width="36" height="36" class="stat"> News
+      </h2>
+      <div class="flex items-center gap-2">
+        <span id="news-unread-count" class="text-sm text-gray-300"></span>
+        <button class="action-button btn-secondary ml-2" onclick="closeNewsModal()">Close</button>
+      </div>
+    </div>
+
+    <div id="news-list-wrapper" class="relative">
+      <div id="news-list" class="flex flex-col gap-3 max-h-72 overflow-y-auto p-1">
+        <!-- Bubbles injected here -->
+      </div>
+
+      <!-- Scroll shadow (top / bottom) -->
+      <div id="news-scroll-top-shadow" class="pointer-events-none absolute left-0 right-0 top-0 h-6 opacity-0 transition-opacity"></div>
+      <div id="news-scroll-bottom-shadow" class="pointer-events-none absolute left-0 right-0 bottom-0 h-6 opacity-0 transition-opacity"></div>
+    </div>
+
+    <div class="flex items-center justify-between mt-4">
+      <div id="news-pagination" class="flex items-center gap-2"></div>
+      <div class="text-xs text-gray-400">Page <span id="news-current-page">1</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FULL NEWS VIEW MODAL -->
+<div id="full-news-modal" class="modal-overlay hidden">
+  <div class="modal-content !w-[640px] !p-6 text-left bg-gray-800 rounded-lg relative">
+    <div class="mb-2">
+      <h2 id="full-news-header" class="text-3xl font-bold mb-1 text-amber-400"></h2>
+      <p id="full-news-date" class="text-gray-400 text-sm mb-4"></p>
+    </div>
+
+    <div id="full-news-content" class="whitespace-pre-wrap text-gray-200 mb-6 max-h-[56vh] overflow-y-auto"></div>
+
+    <div class="flex gap-2 mt-3">
+      <button class="action-button btn-secondary w-full" onclick="closeFullNewsModal()">Back</button>
+      <button id="mark-read-btn" class="action-button btn-heal w-full" onclick="toggleReadCurrent()">Mark as read</button>
+    </div>
+  </div>
+</div>
+
+    <!-- How To / Help Modal (multi-page) -->
+<div id="help-modal-overlay" class="modal-overlay">
+  <div class="modal-content !w-[500px] !p-6">
+    <h2 class="text-2xl font-bold mb-4 text-blue-300 flex items-center gap-2">
+      <img src="images/Help.png" width="36" alt="Help" class="stat"> How to Play
+    </h2>
+
+    <!-- PAGE CONTENT AREA -->
+    <div id="howto-page-content" class="min-h-[220px] text-gray-200"></div>
+
+    <!-- PAGE CONTROLS -->
+    <div class="flex justify-between mt-6 gap-3">
+      <button id="howto-back-btn" class="action-button btn-secondary w-1/2"
+              onclick="howtoPrevPage()">Back</button>
+      <button id="howto-next-btn" class="action-button btn-primary w-1/2"
+              onclick="howtoNextPage()">Next</button>
+    </div>
+
+    <div class="text-center text-xs text-gray-400 mt-2">
+      Page <span id="howto-page-num">1</span> / <span id="howto-total-pages">1</span>
+    </div>
+
+    <button class="action-button btn-secondary w-full mt-4"
+            onclick="closeHelpModal()">Close</button>
+  </div>
+</div>
+
+    <!-- Credits Modal -->
+    <div id="credits-modal-overlay" class="modal-overlay">
+    <div class="modal-content !w-[450px] !p-6">
+        <h2 class="text-2xl font-bold mb-4 text-amber-300"><img src="images/Credits.png" width="36" height="36" class="stat"> Credits</h2>
+
+        <p class="mb-2">Game Design: <span class="font-bold">Andries</span></p>
+        <p class="mb-2">Programming: <span class="font-bold">Andries</span></p>
+        <p class="mb-2">Art Assets: <span class="font-bold"><a href="https://clockworkraven.itch.io" target="_blank">ClockworkRaven Studios</a></span></p>
+        <p class="mb-2">Music: <span class="font-bold"><a href="https://pixabay.com/music/video-games-8-bit-dungeon-251388/" target="_blank">Pixaby</a></span></p>
+
+        <p class="mt-4 opacity-70 text-sm">Built with passion and chaos.</p>
+
+        <button class="action-button btn-secondary w-full mt-6"
+            onclick="closeCreditsModal()">
+            Close
+        </button>
+    </div>
+</div>
+
+    <!-- Options Modal -->
+    <div id="options-modal-overlay" class="modal-overlay">
+<div class="modal-content">
+<h2 class="text-2xl text-amber-400 font-bold mb-4"><img src="images/Settings.png" alt="alt" width="40" height="40" class="stat"> Options</h2>
+<div class="mb-4">
+    <label class="font-bold">Sound Volume:</label>
+    <div class="flex items-center gap-2">
+        <input id="opt-volume" type="range" min="0" max="100" value="100" oninput="updateOptionVolume(this.value)">
+        <span id="opt-volume-val" class="text-amber-300 font-bold">100</span>
+    </div>
+</div>
+
+<div class="mb-4">
+    <label class="font-bold">Text Speed:</label>
+    <div class="flex items-center gap-2">
+        <input id="opt-text-speed" type="range" min="10" max="200" value="100" oninput="updateTextSpeed(this.value)">
+        <span id="opt-text-speed-val" class="text-amber-300 font-bold">100</span>
+    </div>
+</div>
+
+<div class="mb-4">
+    <label class="font-bold">Enemy Encounter Chance:</label>
+    <div class="flex items-center gap-2">
+        <input id="opt-spawn" type="range" min="20" max="90" value="60" oninput="updateEnemySpawnRate(this.value)">
+        <span id="opt-spawn-val" class="text-amber-300 font-bold">60%</span>
+    </div>
+</div>
+<button class="action-button btn-secondary w-full" onclick="closeOptionsModal()">Close</button>
+</div>
+</div>
+
+    <!-- Inventory Modal -->
+    <div id="inventory-modal-overlay" class="modal-overlay">
+        <div class="modal-content !w-[450px] !max-w-[95%]">
+            <h2 class="text-2xl font-bold text-center mb-4 text-blue-400"><img src="images/Inventory.png" alt="Inventory" width="40" height="40" class="stat"> Inventory</h2>
+            <div id="inventory-grid" class="border border-gray-600 rounded-lg p-2 bg-gray-700/30"></div>
+            <button class="action-button btn-secondary w-full mt-4" onclick="closeInventoryModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Item Action Modal -->
+    <div id="item-action-modal-overlay" class="modal-overlay">
+        <div class="modal-content !w-[300px]">
+            <h3 id="action-item-title" class="text-xl font-bold text-center mb-2"></h3>
+            <p id="action-item-count" class="text-center text-sm text-gray-400 mb-3"></p>
+            <div class="flex justify-center mb-4"><span id="action-item-icon" class="text-5xl"></span></div>
+            <p id="action-item-description" class="text-center mb-4 italic text-sm"></p>
+            <div class="flex flex-col gap-2" id="action-buttons-container"></div>
+            <button class="action-button btn-secondary w-full mt-4" onclick="closeItemActionModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // --- SETTINGS (real-time adjustable) ---
+        const settings = {
+            volume: 100,
+            textSpeed: 100,
+            spawnChance: 0.6
+        };
+
+        function updateOptionVolume(val) {
+    settings.volume = Number(val);
+    document.getElementById('opt-volume-val').textContent = val;
+
+    // Update music volume in real time
+    const audio = document.getElementById('menu-music');
+    if (audio) audio.volume = val / 100;
+}
+
+function updateTextSpeed(val) {
+    settings.textSpeed = Number(val);
+    document.getElementById('opt-text-speed-val').textContent = val;
+}
+
+function updateEnemySpawnRate(val) {
+    settings.spawnChance = Number(val) / 100;
+    document.getElementById('opt-spawn-val').textContent = val + "%";
+}
+
+        function openOptionsModal(){ openModal(document.getElementById('options-modal-overlay')); }
+        function closeOptionsModal(){ closeModal(document.getElementById('options-modal-overlay')); }
+        function closeMainMenu(){ closeModal(document.getElementById('main-menu-overlay')); }
+
+        // --- GLOBAL STATE AND DATA ---
+        const XP_BASE = 10; 
+        const STRENGTH_BUFF_AMOUNT = 3; 
+        let isCombatMode = false;
+        let pendingActionItem = null;
+        const INVENTORY_SLOTS = 12;
+
+        const gameState = {
+            maxHp: 10, hp: 10, attack: 3, gold: 0, inventory: {},
+            level: 1, exp: 0, expToNextLevel: XP_BASE, weaponLevel: 1, currentEnemy: null, isExploring: false, temporaryBuff: 0,
+        };
+
+        const itemDB = {
+            'hp_minor': { name: "Healing Potion", icon: 'images/Healing-Normal.png', type: 'consumable', effect: { heal: 5 }, cost: 15, sell: 7, description: "Restores a small amount of vital energy (5 HP)."},
+            'hp_super': { name: "Super Potion", icon: 'images/Healing-Super.png', type: 'consumable', effect: { heal: 20 }, cost: 45, sell: 20, description: "A potent brew for serious injuries (20 HP)."},
+            'atk_buff': { name: "Strength Potion", icon: 'images/Strength.png', type: 'consumable', effect: { attack: STRENGTH_BUFF_AMOUNT }, cost: 30, sell: 15, description: "Temporarily boosts your attack power."},
+            'loot_coin': { name: "Tarnished Coin", icon: 'images/Gold.png', type: 'loot', sell: 1, isJunk: true, description: "A worthless, tarnished coin. Worth 1 Gold."},
+            'loot_shard': { name: "Rusty Shard", icon: 'images/Shards.png', type: 'loot', sell: 5, isJunk: true, description: "A piece of broken, rusty metal. Worth 5 Gold."},
+            'loot_gem': { name: "Rare Gemstone", icon: 'images/Gemstone.png', type: 'loot', sell: 25, isJunk: true, description: "A small, uncut gemstone. Highly valuable. Worth 25 Gold."},
+            'upgrade': { name: "Weapon Sharpening", icon: 'images/Upgrade.png', type: 'upgrade' },
+        };
+
+        function renderIcon(item, size = 32){ if(!item||!item.icon) return ''; const icon = item.icon; if(typeof icon === 'string' && (icon.includes('/') || icon.match(/\.(png|jpg|jpeg|svg|gif)$/i))){ return `<img src="${icon}" alt="${item.name}" width="${size}" height="${size}" style="object-fit:contain;display:inline-block;vertical-align:middle;" />`; } return `<span style="font-size:${Math.max(18,size)}px;display:inline-block;vertical-align:middle;">${icon}</span>`; }
+
+        const monsters = [
+            { name: "Giant Rat", hp: 4, attack: 1, gold: 5, exp: 5, drops: [['hp_minor', 20], ['loot_coin', 50]] },
+            { name: "Goblin Scavenger", hp: 6, attack: 2, gold: 10, exp: 8, drops: [['hp_minor', 10], ['loot_shard', 30], ['loot_coin', 30]] },
+            { name: "Skeleton Guard", hp: 8, attack: 3, gold: 15, exp: 12, drops: [['hp_minor', 10], ['loot_shard', 20], ['atk_buff', 5]] },
+            { name: "Oozing Slime", hp: 10, attack: 2, gold: 8, exp: 10, drops: [['hp_minor', 5], ['hp_super', 5], ['loot_coin', 80]] },
+            { name: "Iron Golem", hp: 15, attack: 4, gold: 25, exp: 20, drops: [['hp_super', 10], ['loot_gem', 20], ['atk_buff', 10]] },
+        ];
+
+        const treasureEncounters = [
+            { message: "You find a dusty, ancient chest! (High Reward)", gold: 20, drops: [['hp_super', 20], ['loot_gem', 10]] },
+            { message: "A small pouch of tarnished coins lies in the corner.", gold: 10, drops: [['loot_coin', 50]] },
+            { message: "You discover a hidden cache of supplies and relics.", gold: 5, drops: [['hp_minor', 40], ['loot_shard', 30]] },
+        ];
+
+        // DOM refs
+        const logElement = document.getElementById('game-log');
+        const buttonsElement = document.getElementById('action-buttons');
+        const hpBarFill = document.getElementById('hp-bar-fill');
+        const shopModal = document.getElementById('shop-modal-overlay');
+        const inventoryModal = document.getElementById('inventory-modal-overlay');
+        const itemActionModal = document.getElementById('item-action-modal-overlay');
+        const shopItemsContainer = document.getElementById('shop-items-container');
+        const inventoryGrid = document.getElementById('inventory-grid');
+        const actionButtonsContainer = document.getElementById('action-buttons-container');
+
+        const stats = {
+            hp: document.getElementById('player-hp'), maxHp: document.getElementById('player-max-hp'), gold: document.getElementById('player-gold'), attack: document.getElementById('player-attack'), weaponLevel: document.getElementById('player-weapon-level'), buffStatus: document.getElementById('player-buff-status'), level: document.getElementById('player-level'), exp: document.getElementById('player-exp'), expNext: document.getElementById('player-exp-next')
+        };
+
+        function isMobileDevice(){ return window.innerWidth < 768; }
+        function log(message, className=''){ const entry = document.createElement('div'); entry.className = 'log-entry ' + className; entry.innerHTML = message; logElement.appendChild(entry); logElement.scrollTop = logElement.scrollHeight; }
+
+        function updateButtons(actions){ buttonsElement.innerHTML=''; actions.forEach(action=>{ const button = document.createElement('button'); button.type='button'; button.className = `action-button ${action.cssClass||''}`; button.innerHTML = action.text; if(typeof action.handler==='function'){ button.addEventListener('click', action.handler); } buttonsElement.appendChild(button); }); }
+
+        function updateStats(){ const baseAttack = 3 + (gameState.level -1) *1 + (gameState.weaponLevel -1)*1; gameState.attack = baseAttack + gameState.temporaryBuff; stats.hp.textContent = gameState.hp; stats.maxHp.textContent = gameState.maxHp; stats.gold.textContent = gameState.gold; stats.attack.textContent = gameState.attack; stats.weaponLevel.textContent = gameState.weaponLevel; stats.level.textContent = gameState.level; stats.exp.textContent = gameState.exp; stats.expNext.textContent = gameState.expToNextLevel; if(gameState.temporaryBuff>0){ stats.buffStatus.textContent = `+${gameState.temporaryBuff} ATK (Temp)`; stats.buffStatus.className = 'text-strength italic font-bold'; } else { stats.buffStatus.textContent = 'None'; stats.buffStatus.className = 'text-gray-400 italic'; } const percent = (gameState.hp / gameState.maxHp) *100; hpBarFill.style.width = `${Math.max(0, percent)}%`; }
+
+        function clearTempBuffs(){ if(gameState.temporaryBuff>0){ log(`The temporary attack buff of +${gameState.temporaryBuff} fades.`, 'text-gray-500'); gameState.temporaryBuff = 0; } updateStats(); }
+
+        function openModal(modal){ modal.style.display='flex'; requestAnimationFrame(()=> modal.classList.add('active')); }
+        function closeModal(modal, cb){ modal.classList.remove('active'); setTimeout(()=>{ modal.style.display='none'; if(cb) cb(); },300); }
+
+        function addItemToInventory(itemId, quantity=1){ const currentUniqueItems = Object.keys(gameState.inventory).length; if(!gameState.inventory[itemId] && currentUniqueItems >= INVENTORY_SLOTS){ log(`Your inventory is full! You discarded a **${itemDB[itemId].name}**.`, 'text-red-400'); return; } if(gameState.inventory[itemId]) gameState.inventory[itemId]+=quantity; else gameState.inventory[itemId]=quantity; if(!isCombatMode) promptExploration(); else promptCombat(); }
+        function removeItemFromInventory(itemId, quantity=1){ if(gameState.inventory[itemId] && gameState.inventory[itemId]>=quantity){ gameState.inventory[itemId]-=quantity; if(gameState.inventory[itemId]<=0) delete gameState.inventory[itemId]; if(!isCombatMode) promptExploration(); else promptCombat(); return true; } return false; }
+        function countUniqueItems(){ return Object.keys(gameState.inventory).length; }
+
+        function startGame(){ gameState.maxHp=10; gameState.hp=10; gameState.attack=3; gameState.gold=0; gameState.inventory={}; addItemToInventory('hp_minor',3); addItemToInventory('atk_buff',1); addItemToInventory('hp_super',1); addItemToInventory('loot_gem',2); addItemToInventory('loot_shard',3); addItemToInventory('loot_coin',15); gameState.level=1; gameState.exp=0; gameState.expToNextLevel=XP_BASE; gameState.weaponLevel=1; gameState.currentEnemy=null; gameState.isExploring=false; gameState.temporaryBuff=0; logElement.innerHTML=''; log("The Iron Tomb's gate slams shut behind you. Time to move!", 'emphasis'); updateStats(); promptExploration(); }
+
+        function explore(){ log("You decide to <b>Continue Descent</b>.", 'text-gray-400'); clearTempBuffs(); gameState.currentEnemy=null; isCombatMode=false; const roll=Math.random(); if(roll < settings.spawnChance) { startCombat(); } else if(roll < settings.spawnChance + 0.25) { findTreasure(); } else if(roll < settings.spawnChance + 0.35) { findShrine(); } else { enterShop(); } }
+
+        function gainExperience(amount){ gameState.exp+=amount; log(`You gain ${amount} experience points.`, 'text-blue-400'); checkLevelUp(); updateStats(); }
+        function checkLevelUp(){ while(gameState.exp >= gameState.expToNextLevel){ gameState.exp -= gameState.expToNextLevel; gameState.level++; gameState.maxHp +=5; gameState.hp = gameState.maxHp; gameState.expToNextLevel = XP_BASE * gameState.level; log(`🔥 You reached LEVEL ${gameState.level}! Your stats have increased!`, 'lvlup'); } }
+
+        function processDrops(drops){ let itemsFound=[]; drops.forEach(([itemId,chance])=>{ if(Math.random()*100 < chance){ addItemToInventory(itemId); itemsFound.push(`<img src="${itemDB[itemId].icon}" alt="${itemDB[itemId].name}" width="20" height="20" class="stat"> ${itemDB[itemId].name}`); } }); if(itemsFound.length>0) log(`You found: ${itemsFound.join(', ')}!`, 'heal'); }
+
+        function enterShop(){ log("You step into the local <b>Shop</b>.", 'gold-color'); populateShopModal(); openModal(shopModal); }
+        function closeShopModal(){ closeModal(shopModal, promptExploration); }
+        function populateShopModal(){ shopItemsContainer.innerHTML=''; const shopItems=[{id:'hp_minor',css:'btn-heal'},{id:'hp_super',css:'btn-secondary'},{id:'atk_buff',css:'btn-secondary'}]; shopItems.forEach(entry=>{ const item=itemDB[entry.id]; shopItemsContainer.innerHTML += `\n<div class="item-row bg-gray-600/50 rounded-lg p-3 flex justify-between items-center border border-gray-700 hover:bg-gray-600 cursor-pointer" onclick="buyItem('${entry.id}')">\n<div class="flex items-center">\n<span class="text-3xl mr-3">${renderIcon(item,32)}</span>\n<div>\n<p class="font-bold">${item.name}</p>\n<p class="text-xs opacity-75">${item.description}</p>\n</div>\n</div>\n<span class="font-bold text-lg text-gold-color">${item.cost} <img src="images/Coin.png" alt="Coin" width="20" height="20"></span>\n</div>`; }); const upgItem=itemDB['upgrade']; const upgCost = 25 + (gameState.weaponLevel -1)*25; shopItemsContainer.innerHTML += `\n<div class="item-row bg-gold-color/30 rounded-lg p-3 flex justify-between items-center border border-gold-color/50 hover:bg-gold-color/40 cursor-pointer" onclick="buyItem('upgrade', ${upgCost})">\n<div class="flex items-center">\n<span class="text-3xl mr-3">${renderIcon(upgItem,32)}</span>\n<div>\n<p class="font-bold text-gold-color">${upgItem.name} (Lv. ${gameState.weaponLevel})</p>\n<p class="text-xs opacity-75 text-gray-200">Permanent +1 Attack. Next cost: ${upgCost}</p>\n</div>\n</div>\n<span class="font-bold text-lg text-gold-color">${upgCost} <img src="images/Coin.png" alt="Coin" width="20" height="20"></span>\n</div>`; }
+
+        function buyItem(itemId, costOverride){ const item = itemDB[itemId]; const cost = costOverride || item.cost; if(gameState.gold < cost){ log("You do not have enough gold for that purchase!", 'text-red-400'); populateShopModal(); return; } gameState.gold -= cost; if(itemId==='upgrade'){ gameState.weaponLevel++; log(`Your weapon is sharpened! Attack permanently increased by 1.`, 'lvlup'); } else { addItemToInventory(itemId); log(`You bought a **${item.name}** for ${cost} gold.`, 'heal'); } updateStats(); populateShopModal(); }
+
+        function sellAllJunk(){ let totalGold=0; let junkSoldCount=0; const itemsToRemove=[]; for(const itemId in gameState.inventory){ const item=itemDB[itemId]; if(item && item.isJunk && gameState.inventory[itemId]>0){ const count=gameState.inventory[itemId]; totalGold += item.sell * count; junkSoldCount += count; itemsToRemove.push(itemId); } } if(junkSoldCount===0){ log("You have no junk items to sell!", 'text-gray-500'); return; } itemsToRemove.forEach(id=> delete gameState.inventory[id]); gameState.gold += totalGold; log(`You sold ${junkSoldCount} junk items for a total of ${totalGold} gold!`, 'gold-color'); updateStats(); promptExploration(); }
+
+        function openInventoryModal(){ if(!isCombatMode) log("You open your <b>Inventory</b>.", 'text-blue-400'); populateInventoryModal(); openModal(inventoryModal); }
+        function closeInventoryModal(){ const cb = isCombatMode ? promptCombat : promptExploration; closeModal(inventoryModal, cb); }
+
+        function populateInventoryModal(){ inventoryGrid.innerHTML=''; const sortedItemIds = Object.keys(gameState.inventory).filter(id=> gameState.inventory[id]>0).sort((a,b)=>{ const typeA = itemDB[a].type; const typeB = itemDB[b].type; if(typeA==='consumable' && typeB!=='consumable') return -1; if(typeA!=='consumable' && typeB==='consumable') return 1; return itemDB[a].name.localeCompare(itemDB[b].name); }); const itemIdsToDisplay = sortedItemIds.slice(0, INVENTORY_SLOTS); itemIdsToDisplay.forEach(itemId=>{ const count = gameState.inventory[itemId]; const item = itemDB[itemId]; const clickHandler = isMobileDevice() ? `openItemActionModal('${itemId}')` : `handleInventoryClick('${itemId}')`; let tooltipContent = `<div class="tooltip desktop-only"><p class="font-bold text-lg">${item.name}</p><p class="text-sm italic text-gray-400 mb-1">x${count}</p><p class="text-xs">${item.description}</p>`; if(item.isJunk){ tooltipContent += `<p class="text-xs mt-2 text-gold-color">Click to Sell (<img src="images/Coin.png" alt="Coin" width="20" height="20"> ${item.sell} each)</p>`; } else if(item.type==='consumable' && !isCombatMode){ tooltipContent += `<p class="text-xs mt-2 text-heal">Click to Use</p>`; } else if(item.type==='consumable' && isCombatMode){ tooltipContent += `<p class="text-xs mt-2 text-red-400">Click to Use (Enemy gets a free attack!)</p>`; } tooltipContent += `</div>`; inventoryGrid.innerHTML += `\n<div class="item-tile" onclick="${clickHandler}">\n<span class="item-icon-large">${renderIcon(item,32)}</span>\n<span class="item-count">${count}</span>\n<span class="item-name-small">${item.name}</span>\n${tooltipContent}\n</div>`; }); const emptySlots = INVENTORY_SLOTS - itemIdsToDisplay.length; for(let i=0;i<emptySlots;i++){ inventoryGrid.innerHTML += `\n<div class="item-tile empty"><span class="text-gray-600">-- Empty --</span></div>`; } }
+
+        function handleInventoryClick(itemId){ const item = itemDB[itemId]; if(item.type==='consumable'){ if(useItem(itemId)){ populateInventoryModal(); if(isCombatMode){ closeModal(inventoryModal, takeEnemyTurnAfterPotionUse); return; } } } else if(item.isJunk){ openItemActionModal(itemId); } }
+
+        function openItemActionModal(itemId){ pendingActionItem = itemId; const item = itemDB[itemId]; const count = gameState.inventory[itemId]; document.getElementById('action-item-title').textContent = item.name; document.getElementById('action-item-icon').innerHTML = renderIcon(item,64); document.getElementById('action-item-count').textContent = `Quantity: x${count}`; document.getElementById('action-item-description').textContent = item.description; actionButtonsContainer.innerHTML=''; if(item.type==='consumable') actionButtonsContainer.innerHTML += `<button class="action-button btn-heal" onclick="confirmUseItem()">Use One</button>`; if(item.isJunk) actionButtonsContainer.innerHTML += `<button class="action-button btn-gold" onclick="confirmSellItem()">Sell One (<img src=\"images/Coin.png\" alt=\"Coin\" width=\"20\" height=\"20\"> ${item.sell})</button>`; closeModal(inventoryModal, ()=> openModal(itemActionModal)); }
+
+        function closeItemActionModal(){ pendingActionItem=null; closeModal(itemActionModal, ()=> openModal(inventoryModal)); }
+
+        function confirmUseItem(){ if(!pendingActionItem) return; const itemId = pendingActionItem; if(useItem(itemId)){ if(isCombatMode){ closeModal(itemActionModal, takeEnemyTurnAfterPotionUse); } else { closeModal(itemActionModal, ()=>{ populateInventoryModal(); openModal(inventoryModal); }); } } else { closeModal(itemActionModal, ()=>{ populateInventoryModal(); openModal(inventoryModal); }); } }
+
+        function confirmSellItem(){ if(!pendingActionItem) return; sellSingleItem(pendingActionItem); if(gameState.inventory[pendingActionItem] > 0){ openItemActionModal(pendingActionItem); } else { closeModal(itemActionModal, ()=>{ populateInventoryModal(); openModal(inventoryModal); }); } }
+
+        function useItem(itemId){ const item=itemDB[itemId]; if(!item||item.type!=='consumable') return false; if(removeItemFromInventory(itemId)){ const itemIconHTML = `<img src="${item.icon}" alt="${item.name}" width="20" height="20" class="stat">`; if(item.effect.heal){ const healAmount = item.effect.heal; gameState.hp = Math.min(gameState.maxHp, gameState.hp + healAmount); log(`You use ${itemIconHTML}<b>${item.name}</b>, restoring ${healAmount} HP.`, 'heal'); } else if(item.effect.attack){ clearTempBuffs(); gameState.temporaryBuff = item.effect.attack; log(`You use ${itemIconHTML}<b>${item.name}</b>! Attack increases by +${item.effect.attack}.`, 'buff'); } updateStats(); return true; } else { log(`Error: Failed to use ${item.name}. None in inventory?`, 'text-red-400'); return false; } }
+
+        function sellSingleItem(itemId){ const item=itemDB[itemId]; if(!item||!item.isJunk) return; if(removeItemFromInventory(itemId)){ gameState.gold += item.sell; log(`Sold one <img src="${item.icon}" alt="${item.name}" width="20" height="20" class="stat"><b>${item.name}</b> for <img src="images/Gold.png" alt="Gold" width="20" height="20" class="stat">${item.sell} gold.`, 'gold-color'); } updateStats(); }
+
+        function takeEnemyTurnAfterPotionUse(){ const enemy=gameState.currentEnemy; if(!enemy){ promptExploration(); return; } const enemyDmg = enemy.attack; gameState.hp -= enemyDmg; log(`The ${enemy.name} attacks while you are focused, hitting you for ${enemyDmg} damage!`, 'damage'); updateStats(); if(gameState.hp <=0){ handleDefeat(); return; } promptCombat(); }
+
+        function startCombat(){ isCombatMode = true; const enemyIndex = Math.floor(Math.random()*monsters.length); const baseEnemy = monsters[enemyIndex]; const scale = 1 + (gameState.level -1)*0.2; gameState.currentEnemy = { name: baseEnemy.name, hp: Math.round(baseEnemy.hp * scale), attack: Math.round(baseEnemy.attack * scale), gold: Math.round(baseEnemy.gold * scale), exp: Math.round(baseEnemy.exp * scale), drops: baseEnemy.drops }; log(`A hostile ${gameState.currentEnemy.name} appears! (${gameState.currentEnemy.hp} HP)`, 'damage'); promptCombat(); }
+
+        function promptCombat(){ const uniqueItemCount = countUniqueItems(); updateButtons([{ text: `<img src="images/Attack.png" alt="Attack" width="40" height="40" class="stat"> Attack`, cssClass:'btn-primary', handler: ()=> handleAttack() },{ text: `<img src="images/Inventory.png" alt="Inventory" width="40" height="40" class="stat"> Inventory (${uniqueItemCount})`, cssClass:'btn-heal', handler: ()=> openInventoryModal() },{ text: `<img src="images/Continue.png" alt="Flee" width="40" height="40" class="stat"> Flee`, cssClass:'btn-secondary', handler: ()=> handleFlee() }]); }
+
+        function handleAttack(){ const enemy = gameState.currentEnemy; const playerDmg = gameState.attack; const enemyDmg = enemy.attack; enemy.hp -= playerDmg; log(`You strike the ${enemy.name} for ${playerDmg} damage!`); if(enemy.hp <=0){ handleVictory(); return; } gameState.hp -= enemyDmg; log(`The ${enemy.name} retaliates, hitting you for ${enemyDmg} damage.`, 'damage'); updateStats(); if(gameState.hp <=0){ handleDefeat(); return; } promptCombat(); }
+
+        function handleFlee(){ if(Math.random() < 0.5){ log("You managed to escape the monster!", 'heal'); gameState.currentEnemy = null; clearTempBuffs(); promptExploration(); } else { const enemy=gameState.currentEnemy; const enemyDmg=enemy.attack; gameState.hp -= enemyDmg; log(`You failed to escape! The ${enemy.name} hits you for ${enemyDmg} damage as you stumble.`, 'damage'); updateStats(); if(gameState.hp <=0){ handleDefeat(); return; } promptCombat(); } }
+
+        function handleVictory(){ const enemy=gameState.currentEnemy; const goldGained = enemy.gold; const expGained = enemy.exp; gameState.gold += goldGained; log(`You defeated the ${enemy.name}! Looted ${goldGained} gold.`, 'emphasis'); processDrops(enemy.drops); gameState.currentEnemy = null; gainExperience(expGained); clearTempBuffs(); promptExploration(); }
+
+        function handleDefeat(){ gameState.isExploring = false; log("Your journey ends here. You were defeated...", 'text-red-600 font-bold'); log(`Game Over! Final Level: ${gameState.level}. Total Gold: ${gameState.gold}.`); updateStats(); updateButtons([{ text: "Start New Game?", cssClass:'btn-primary w-full', handler: ()=> startGame() }]); }
+
+        function findTreasure(){ const encounter = treasureEncounters[Math.floor(Math.random()*treasureEncounters.length)]; gameState.gold += encounter.gold; log(`✨ ${encounter.message} You gain ${encounter.gold} gold!`, 'emphasis'); processDrops(encounter.drops); updateStats(); promptExploration(); }
+        function findShrine(){ const roll=Math.random(); if(roll < 0.6){ const healAmount=5; gameState.hp = Math.min(gameState.maxHp, gameState.hp + healAmount); log(`A shimmering blue light heals your wounds for ${healAmount} HP.`, 'heal'); } else { clearTempBuffs(); const buffAmount = 1; gameState.temporaryBuff = buffAmount; log(`A rune lights up, granting you a temporary +${buffAmount} attack buff!`, 'lvlup'); } updateStats(); promptExploration(); }
+
+        function promptExploration(){ const uniqueItemCount = countUniqueItems(); log("The path continues deeper into the gloom. What do you do?"); updateButtons([{ text: `<img src="images/Continue.png" alt="Continue" width="40" height="40" class="stat"> Continue Descent`, cssClass:'btn-primary', handler: ()=> explore() },{ text: `<img src="images/Inventory.png" alt="Inventory" width="40" height="40" class="stat"> Inventory (${uniqueItemCount})`, cssClass:'btn-heal', handler: ()=> openInventoryModal() },{ text: `<img src="images/Shop.png" alt="Shop" width="40" height="40" class="stat"> Visit Shop`, cssClass:'btn-gold', handler: ()=> enterShop() }]); }
+
+        function updateNewsButtonDot() {
+    const unread = getUnreadCount();
+    const dot = document.getElementById("news-unread-dot");
+    dot.style.display = unread > 0 ? "block" : "none";
+        }
+
+        // HELP MODAL CONTROL
+/* HOW-TO (Help) multi-page content */
+let HOWTO_PAGE = 1;
+const HOWTO_PAGES = [
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Basics</h3>
+<p>Your goal is to descend the Iron Tomb, defeat monsters, collect loot, and survive as long as possible.</p>
+<img src="images/Start.png" class="mx-auto my-4" width="120">
+<ul class="list-disc pl-6 space-y-1">
+  <li>Attack enemies</li>
+  <li>Use potions and buffs</li>
+  <li>Collect items</li>
+  <li>Upgrade your equipment</li>
+</ul>`,
+
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Combat</h3>
+<img src="images/Attack.png" class="mx-auto my-4" width="120">
+<p>Combat is turn-based. Each attack deals damage based on your Attack stat.</p>
+<ul class="list-disc pl-6 space-y-1">
+  <li>Potions heal instantly</li>
+  <li>Buffs give temporary attack power</li>
+  <li>Flee to escape tough enemies</li>
+</ul>`,
+
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Inventory & Items</h3>
+<img src="images/Inventory.png" class="mx-auto my-4" width="120">
+<p>The inventory holds potions, buffs, loot, and upgrade resources. Sell junk at shops for gold.</p>`,
+
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Shops & Upgrades</h3>
+<img src="images/Upgrade.png" class="mx-auto my-4" width="120">
+<p>Upgrade your weapon to permanently increase attack power. Shops sell potions, buffs, and upgrades.</p>`,
+
+`<h3 class="text-xl font-bold text-amber-300 mb-2">Good Luck!</h3>
+<p>You now know everything you need to survive the Iron Tomb.</p>
+<img src="images/Buff.png" class="mx-auto my-4" width="120">
+<p class="text-center italic">Stay sharp. The dungeon is always watching...</p>`
+];
+
+function renderHowToPage() {
+    const area = document.getElementById("howto-page-content");
+    const num = document.getElementById("howto-page-num");
+    const total = document.getElementById("howto-total-pages");
+    if (!area) return;
+    area.innerHTML = HOWTO_PAGES[HOWTO_PAGE - 1] || "<p>Page not found.</p>";
+    num.textContent = HOWTO_PAGE;
+    total.textContent = HOWTO_PAGES.length;
+    // enable/disable buttons
+    document.getElementById('howto-back-btn').disabled = (HOWTO_PAGE <= 1);
+    document.getElementById('howto-next-btn').disabled = (HOWTO_PAGE >= HOWTO_PAGES.length);
+}
+
+function openHelpModal() {
+    HOWTO_PAGE = 1;
+    renderHowToPage();
+    openModal(document.getElementById('help-modal-overlay'));
+}
+
+function closeHelpModal() {
+    closeModal(document.getElementById('help-modal-overlay'));
+}
+
+function howtoNextPage() {
+    if (HOWTO_PAGE < HOWTO_PAGES.length) {
+        HOWTO_PAGE++;
+        renderHowToPage();
+    }
+}
+function howtoPrevPage() {
+    if (HOWTO_PAGE > 1) {
+        HOWTO_PAGE--;
+        renderHowToPage();
+    }
+                                }
+
+// CREDITS MODAL CONTROL
+function openCreditsModal() {
+    openModal(document.getElementById('credits-modal-overlay'));
+}
+
+function closeCreditsModal() {
+    closeModal(document.getElementById('credits-modal-overlay'));
+}
+
+/* --- Upgraded News System --- */
+
+const NEWS_PAGE_SIZE = 4;
+let NEWS_DATA = [];
+let NEWS_CURRENT_PAGE = 1;
+let NEWS_READ_SET = new Set(JSON.parse(localStorage.getItem('news_read_set') || '[]'));
+
+/**
+ * Helper: format plain text content to clickable links (simple)
+ * Note: we set innerHTML only for formatted content. If you expect untrusted input,
+ * sanitize it first. These are static news files in your repo so acceptable here.
+ */
+function formatContentToHtml(text) {
+    // Convert URLs to anchors
+    const urlRegex = /(\bhttps?:\/\/[^\s]+)/g;
+    const escaped = text
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
+    const linked = escaped.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+    // keep line breaks
+    return linked.replace(/\n/g, '<br>');
+}
+
+async function loadNewsFromJson() {
+    try {
+        const resp = await fetch('news/news.json', { cache: "no-cache" });
+        if (!resp.ok) throw new Error('Fetch failed');
+        const data = await resp.json();
+        return data;
+    } catch (err) {
+        // Fallback: small inline list if fetch fails
+        console.warn('Failed to load /news/news.json — using fallback.', err);
+        return [
+            { "id": "fallback-1", "header": "No remote news", "date": new Date().toISOString().slice(0,10), "content": "Could not load the news.json file for the latest news. Check path or GitHub Pages CORS settings." }
+        ];
+    }
+}
+
+function saveReadSet() {
+    localStorage.setItem('news_read_set', JSON.stringify(Array.from(NEWS_READ_SET)));
+}
+
+function getUnreadCount() {
+    return NEWS_DATA.filter(n => !NEWS_READ_SET.has(n.id)).length;
+}
+
+function renderNewsList(page = 1) {
+    NEWS_CURRENT_PAGE = page;
+    const listEl = document.getElementById('news-list');
+    listEl.innerHTML = '';
+
+    const offset = (page - 1) * NEWS_PAGE_SIZE;
+    const pageItems = NEWS_DATA.slice(offset, offset + NEWS_PAGE_SIZE);
+
+    pageItems.forEach((news, idx) => {
+        const bubble = document.createElement('div');
+        bubble.className = 'news-bubble news-slide-in';
+        // excerpt: first 120 chars
+        const rawExcerpt = news.content.replace(/\n/g,' ').trim();
+        const excerpt = rawExcerpt.length > 140 ? rawExcerpt.slice(0,140) + '…' : rawExcerpt;
+
+        // header row includes title, date, badge
+        const badgeHtml = NEWS_READ_SET.has(news.id) ? '' : `<span class="news-badge">NEW</span>`;
+        bubble.innerHTML = `
+            <div class="news-title-row">
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <div style="font-weight:700">${news.header}</div>
+                    ${badgeHtml}
+                </div>
+                <div style="font-size:0.85rem;color:#9ca3af">${news.date}</div>
+            </div>
+            <div class="news-excerpt">${excerpt}</div>
+        `;
+
+        bubble.addEventListener('click', () => {
+            openFullNewsModal(news);
+        });
+
+        listEl.appendChild(bubble);
+    });
+
+    // empty state
+    if (pageItems.length === 0) {
+        listEl.innerHTML = '<div class="text-gray-400 italic p-4">No news available.</div>';
+    }
+
+    renderPagination();
+    document.getElementById('news-current-page').textContent = NEWS_CURRENT_PAGE;
+    document.getElementById('news-unread-count').textContent = `${getUnreadCount()} unread`;
+    updateNewsScrollShadows();
+}
+
+function renderPagination() {
+    const container = document.getElementById('news-pagination');
+    container.innerHTML = '';
+    const totalPages = Math.max(1, Math.ceil(NEWS_DATA.length / NEWS_PAGE_SIZE));
+
+    const prev = document.createElement('button');
+    prev.className = 'news-page-btn';
+    prev.textContent = 'Prev';
+    prev.disabled = (NEWS_CURRENT_PAGE <= 1);
+    prev.onclick = () => renderNewsList(Math.max(1, NEWS_CURRENT_PAGE - 1));
+    container.appendChild(prev);
+
+    // optionally show page numbers if small
+    for (let i = 1; i <= totalPages; i++) {
+        const pbtn = document.createElement('button');
+        pbtn.className = 'news-page-btn';
+        pbtn.textContent = String(i);
+        if (i === NEWS_CURRENT_PAGE) pbtn.style.opacity = '0.6';
+        pbtn.onclick = () => renderNewsList(i);
+        container.appendChild(pbtn);
+    }
+
+    const next = document.createElement('button');
+    next.className = 'news-page-btn';
+    next.textContent = 'Next';
+    next.disabled = (NEWS_CURRENT_PAGE >= totalPages);
+    next.onclick = () => renderNewsList(Math.min(totalPages, NEWS_CURRENT_PAGE + 1));
+    container.appendChild(next);
+}
+
+async function loadNews() {
+    NEWS_DATA = await loadNewsFromJson();
+
+    // Ensure ID exists and normalize
+    NEWS_DATA = NEWS_DATA.map((n, i) => ({
+        ...n,
+        id: n.id ?? `news-${i}`
+    }));
+
+    // 🚀 SORT BY ID DESCENDING (latest ID first)
+    NEWS_DATA.sort((a, b) => Number(b.id) - Number(a.id));
+
+    renderNewsList(1);
+    updateNewsButtonDot();
+}
+
+/* Open/Close (use your modal helpers for animation) */
+function openNewsModal() {
+    const modal = document.getElementById('news-modal');
+    openModal(modal); // reuse your openModal animation
+    // (re)load to get latest
+    loadNews();
+    updateNewsButtonDot();
+}
+
+function closeNewsModal() {
+    const modal = document.getElementById('news-modal');
+    closeModal(modal);
+}
+
+/* Full view */
+let CURRENT_OPEN_NEWS = null;
+
+function openFullNewsModal(news) {
+    CURRENT_OPEN_NEWS = news;
+    const hdr = document.getElementById('full-news-header');
+    const date = document.getElementById('full-news-date');
+    const content = document.getElementById('full-news-content');
+    hdr.textContent = news.header;
+    date.textContent = news.date;
+    content.innerHTML = formatContentToHtml(news.content);
+
+    // mark as read when opening
+    if (!NEWS_READ_SET.has(news.id)) {
+        NEWS_READ_SET.add(news.id);
+        saveReadSet();
+        // re-render list so badge disappears
+        renderNewsList(NEWS_CURRENT_PAGE);
+    }
+
+    // update mark button
+    document.getElementById('mark-read-btn').textContent = 'Mark as unread';
+    if (NEWS_READ_SET.has(news.id)) {
+        document.getElementById('mark-read-btn').textContent = 'Mark as unread';
+    } else {
+        document.getElementById('mark-read-btn').textContent = 'Mark as read';
+    }
+
+    openModal(document.getElementById('full-news-modal'));
+}
+
+function closeFullNewsModal() {
+    closeModal(document.getElementById('full-news-modal'));
+    CURRENT_OPEN_NEWS = null;
+}
+
+function toggleReadCurrent() {
+    if (!CURRENT_OPEN_NEWS) return;
+    if (NEWS_READ_SET.has(CURRENT_OPEN_NEWS.id)) {
+        NEWS_READ_SET.delete(CURRENT_OPEN_NEWS.id);
+    } else {
+        NEWS_READ_SET.add(CURRENT_OPEN_NEWS.id);
+    }
+    saveReadSet();
+    // update UI
+    renderNewsList(NEWS_CURRENT_PAGE);
+    document.getElementById('mark-read-btn').textContent = NEWS_READ_SET.has(CURRENT_OPEN_NEWS.id) ? 'Mark as unread' : 'Mark as read';
+    updateNewsButtonDot();
+}
+
+/* Scroll shadow helpers */
+function updateNewsScrollShadows() {
+    const list = document.getElementById('news-list');
+    const topShadow = document.getElementById('news-scroll-top-shadow');
+    const bottomShadow = document.getElementById('news-scroll-bottom-shadow');
+    if (!list) return;
+
+    // run once to set on load
+    const check = () => {
+        topShadow.classList.toggle('opacity-1', list.scrollTop > 10);
+        const bottomVisible = list.scrollHeight - list.scrollTop - list.clientHeight > 10;
+        bottomShadow.classList.toggle('opacity-1', bottomVisible);
+    };
+
+    list.addEventListener('scroll', check);
+    check();
+}
+
+/* initial hook: make sure news loads if user opens modal */
+        
+        function toggleMenuMusic() {
+    const audio = document.getElementById('menu-music');
+    const btn = document.getElementById('music-toggle');
+    if (!audio) return;
+
+    if (audio.paused) {
+        // PLAY
+        audio.volume = settings.volume / 100;
+        audio.play().catch(() => {}); // silently fail if autoplay is blocked
+        if (btn) {
+            btn.innerHTML = 
+                '<img src="images/MusicMute.png" width="40" height="40" class="stat"> Mute Music';
+        }
+    } else {
+        // PAUSE
+        audio.pause();
+        if (btn) {
+            btn.innerHTML = 
+                '<img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music';
+        }
+    }
+}
+
+// Browser gesture unlock (autoplay fix for iOS & Android)
+function initMenuAudioOnGesture() {
+    const audio = document.getElementById('menu-music');
+    if (!audio) return;
+
+    audio.volume = settings.volume / 100;
+
+    const unlockAudio = () => {
+        audio.play()
+            .then(() => {
+                updateMusicButton(audio);
+            })
+            .catch(() => {});
+
+        // Some mobile browsers need multiple gestures
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
+    };
+
+    // Listen for both click and touchstart gestures
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio, { passive: true });
+}
+
+function updateMusicButton(audio) {
+    const btn = document.getElementById('music-toggle');
+    if (!btn) return;
+
+    if (audio.paused) {
+        btn.innerHTML = 
+            '<img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music';
+    } else {
+        btn.innerHTML = 
+            '<img src="images/MusicMute.png" width="40" height="40" class="stat"> Mute Music';
+    }
+}
+
+// INIT
+window.addEventListener('DOMContentLoaded', () => {
+    // show menu, hide game UI
+    document.getElementById('main-menu').style.display = 'flex';
+    document.getElementById('game-root').style.display = 'none';
+
+    // slider numeric labels
+    document.getElementById('opt-volume-val').textContent = settings.volume;
+    document.getElementById('opt-text-speed-val').textContent = settings.textSpeed;
+    document.getElementById('opt-spawn-val').textContent = Math.round(settings.spawnChance * 100) + "%";
+
+    // set volume
+    const audio = document.getElementById('menu-music');
+    if (audio) audio.volume = settings.volume / 100;
+
+    // unlock audio when user interacts
+    initMenuAudioOnGesture();
+});
+
+    </script>
+</body>
+</html>
