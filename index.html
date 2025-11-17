@@ -371,6 +371,24 @@
 }
 #news-scroll-bottom-shadow { background: linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0)); }
 #news-scroll-top-shadow.opacity-1, #news-scroll-bottom-shadow.opacity-1 { opacity: 1; }
+
+        .menu-circle-btn {
+    width: 70px;
+    height: 70px;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.menu-circle-btn:hover {
+    transform: scale(1.08);
+    background: rgba(255,255,255,0.15);
+}
         
     </style>
 </head>
@@ -414,6 +432,20 @@
             <img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music
         </button>
 
+        <!-- CIRCLE BUTTONS UNDER MAIN MENU -->
+<div class="flex justify-center gap-6 mt-6">
+
+    <!-- Login / Sign Up -->
+    <div class="menu-circle-btn" onclick="openLoginSignupModal()">
+        <img src="images/Login.png" width="40">
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="menu-circle-btn" onclick="openLeaderboardModal()">
+        <img src="images/Leaderboard.png" width="40">
+    </div>
+
+</div>
     </div>
 </div>
 
@@ -462,6 +494,71 @@
             <button class="action-button btn-secondary w-full" onclick="closeShopModal()">Leave Shop</button>
         </div>
     </div>
+
+    <!-- LEADERBOARD MODAL -->
+<div id="leaderboard-modal" class="modal-overlay">
+    <div class="modal-content !w-[450px] !p-6">
+        <h2 class="text-2xl font-bold text-amber-300 mb-4">
+            <img src="images/Leaderboard.png" width="36" class="stat"> Leaderboard
+        </h2>
+
+        <div id="leaderboard-list" class="text-gray-300 text-sm">
+            <p class="opacity-70 italic">No entries yet.</p>
+        </div>
+
+        <button class="action-button btn-secondary w-full mt-6"
+                onclick="closeLeaderboardModal()">
+            Close
+        </button>
+    </div>
+</div>
+
+    <!-- LOGIN / SIGN UP MODAL -->
+<div id="login-modal" class="modal-overlay">
+    <div class="modal-content !w-[450px] !p-6">
+        <h2 class="text-2xl font-bold text-blue-300 mb-4 text-center">
+            Login / Sign Up
+        </h2>
+
+        <div class="flex flex-col gap-4">
+
+            <button class="action-button btn-gold w-full"
+                    onclick="loginWithGoogle()">
+                <img src="images/Login.png" width="30" class="stat"> Continue with Google
+            </button>
+
+            <button class="action-button btn-secondary w-full"
+                    onclick="toggleEmailLogin()">
+                <img src="images/Email.png" width="30" class="stat"> Continue with Email
+            </button>
+
+            <div id="email-login-fields" class="hidden mt-2">
+                <input id="email-field" type="email" placeholder="Email"
+                       class="w-full p-2 rounded bg-gray-700 border border-gray-500 mb-2">
+                <input id="password-field" type="password" placeholder="Password"
+                       class="w-full p-2 rounded bg-gray-700 border border-gray-500 mb-2">
+                <input id="displayname-field" type="text" placeholder="Display Name (Sign Up only)"
+                       class="w-full p-2 rounded bg-gray-700 border border-gray-500">
+                
+                <button class="action-button btn-primary w-full mt-3"
+                        onclick="submitEmailLogin()">
+                    Continue
+                </button>
+            </div>
+
+            <button class="action-button btn-secondary w-full"
+                    onclick="continueAsGuest()">
+                Continue as Guest
+            </button>
+
+        </div>
+
+        <button class="action-button btn-secondary w-full mt-6"
+                onclick="closeLoginSignupModal()">
+            Close
+        </button>
+    </div>
+</div>
 
     <!-- NEWS LIST MODAL -->
 <div id="news-modal" class="modal-overlay hidden">
@@ -1070,6 +1167,51 @@ function updateNewsScrollShadows() {
 
     list.addEventListener('scroll', check);
     check();
+}
+
+    /* LEADERBOARD */
+function openLeaderboardModal() {
+    openModal(document.getElementById("leaderboard-modal"));
+}
+function closeLeaderboardModal() {
+    closeModal(document.getElementById("leaderboard-modal"));
+}
+
+/* LOGIN / SIGN UP */
+function openLoginSignupModal() {
+    openModal(document.getElementById("login-modal"));
+}
+function closeLoginSignupModal() {
+    closeModal(document.getElementById("login-modal"));
+}
+
+/* Email login field toggle */
+function toggleEmailLogin() {
+    const box = document.getElementById("email-login-fields");
+    box.classList.toggle("hidden");
+}
+
+/* Placeholder functions — can be upgraded later */
+function loginWithGoogle() {
+    alert("Google Login coming soon!");
+}
+
+function submitEmailLogin() {
+    let email = document.getElementById("email-field").value;
+    let password = document.getElementById("password-field").value;
+    let name = document.getElementById("displayname-field").value;
+
+    if (!email || !password) {
+        alert("Please enter email and password.");
+        return;
+    }
+
+    alert("Email Login / Signup placeholder\n(" + email + ")");
+}
+
+function continueAsGuest() {
+    alert("Guest mode enabled.");
+    closeLoginSignupModal();
 }
 
 /* initial hook: make sure news loads if user opens modal */
