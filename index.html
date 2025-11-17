@@ -371,48 +371,111 @@
 }
 #news-scroll-bottom-shadow { background: linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0)); }
 #news-scroll-top-shadow.opacity-1, #news-scroll-bottom-shadow.opacity-1 { opacity: 1; }
+
+        /* FULL MAIN MENU PAGE */
+#main-menu-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('images/menu-bg.jpg') center/cover no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    z-index: 9999;
+}
+
+/* Main menu box */
+#main-menu-box {
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    padding: 32px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 420px;
+    text-align: center;
+    border: 3px solid rgba(255,255,255,0.15);
+}
+
+/* Circle buttons */
+.menu-circle-btn {
+    width: 70px;
+    height: 70px;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 12px auto 0;
+    transition: 0.2s;
+}
+
+.menu-circle-btn:hover {
+    transform: scale(1.06);
+    background: rgba(255,255,255,0.18);
+}
         
     </style>
 </head>
 <body class="p-2 sm:p-4">
 
-    <!-- MAIN MENU OVERLAY -->
-    <div id="main-menu-overlay" class="modal-overlay active" style="display:flex;">
-    <div class="modal-content !w-[450px] !p-8 text-center">
-        
+    <!-- FULL SCREEN MAIN MENU PAGE -->
+<div id="main-menu-page">
+    <div id="main-menu-box">
+
         <audio id="menu-music" src="music/MAINMENU.mpeg" loop preload="auto"></audio>
 
         <h2 class="text-4xl font-bold mb-6 text-amber-400">The Iron Tomb</h2>
 
         <button class="action-button btn-primary w-full mb-4"
-            onclick="startGame(); closeMainMenu();">
-            <img src="images/Start.png" width="40" height="40" class="stat"> Start Game
+            onclick="startGame(); hideMainMenu();">
+            <img src="images/Start.png" width="40" class="stat"> Start Game
         </button>
 
         <button class="action-button btn-secondary w-full mb-4"
             onclick="openOptionsModal()">
-            <img src="images/Settings.png" width="40" height="40" class="stat"> Options
+            <img src="images/Settings.png" width="40" class="stat"> Options
         </button>
 
         <button class="action-button btn-secondary w-full mb-4"
             onclick="openHelpModal()">
-            <img src="images/Help.png" width="40" height="40" class="stat"> How to Play
+            <img src="images/Help.png" width="40" class="stat"> How to Play
         </button>
 
-        <button class="action-button btn-secondary w-full mb-6"
+        <button class="action-button btn-secondary w-full mb-4"
             onclick="openCreditsModal()">
-            <img src="images/Credits.png" width="40" height="40" class="stat"> Credits
+            <img src="images/Credits.png" width="40" class="stat"> Credits
         </button>
 
         <button class="action-button btn-secondary w-full mb-4"
             onclick="openNewsModal()">
-            <img src="images/News.png" width="40" height="40" class="stat"> News
+            <img src="images/News.png" width="40" class="stat"> News
         </button>
 
-        <button id="music-toggle" class="action-button btn-gold w-full mb-3"
+        <button id="music-toggle" class="action-button btn-gold w-full mb-6"
             onclick="toggleMenuMusic()">
-            <img src="images/MusicPlay.png" width="40" height="40" class="stat"> Play Music
+            <img src="images/MusicPlay.png" width="40" class="stat"> Play Music
         </button>
+
+        <!-- CIRCLE BUTTONS -->
+        <div class="flex justify-center gap-6 mt-6">
+
+            <!-- Login / Signup -->
+            <div class="menu-circle-btn"
+                 onclick="openLoginPage()">
+                <img src="images/Login.png" width="40">
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="menu-circle-btn"
+                 onclick="openLeaderboardPage()">
+                <img src="images/Leaderboard.png" width="40">
+            </div>
+
+        </div>
 
     </div>
 </div>
